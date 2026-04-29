@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">v4-fortress-main-main</string>
+    <string name="title_activity_main">v4-fortress-main-main</string>
+    <string name="package_name">com.example.v4fortressmainmain</string>
+    <string name="custom_url_scheme">com.example.v4fortressmainmain</string>
+</resources>
