@@ -44,6 +44,8 @@ const ReturnsProcessingTool: React.FC<ReturnsProcessingToolProps> = ({ onScanReq
       addInventoryFolder({
         name: returnsAreaName,
         color: "#F44336",
+        locationType: 'warehouse',
+        isActive: true,
       });
     }
   }, [inventoryFolders, addInventoryFolder]);

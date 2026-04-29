@@ -1,0 +1,51 @@
+export interface AppFeature {
+  id: string;
+  name: string;
+}
+
+export const ALL_APP_FEATURES: AppFeature[] = [
+  { id: "core_inventory_management", name: "Core Inventory Management" },
+  { id: "dashboard_overview", name: "Dashboard Overview" },
+  { id: "basic_order_management", name: "Basic Order Management" },
+  { id: "user_profile_management", name: "User Profile Management" },
+  { id: "basic_reports", name: "Basic Reports" },
+  { id: "mobile_responsive_ui", name: "Mobile Responsive UI" },
+  { id: "in_app_notifications", name: "In-App Notifications" },
+  { id: "email_notifications", name: "Email Notifications" },
+  { id: "customer_management", name: "Customer Management" },
+  { id: "vendor_management", name: "Vendor Management" },
+  { id: "folder_management", name: "Location Management" },
+  { id: "qr_code_generation", name: "QR Code Generation" },
+  { id: "csv_import_export", name: "CSV Import & Export" },
+  { id: "order_kanban_board", name: "Order Kanban Board" },
+  { id: "pdf_export_orders", name: "PDF Export for Orders" },
+  { id: "warehouse_operations_dashboard", name: "Warehouse Operations Dashboard" },
+  { id: "warehouse_tool_item_lookup", name: "Warehouse: Item Lookup" },
+  { id: "warehouse_tool_receive_inventory", name: "Warehouse: Receive Inventory" },
+  { id: "warehouse_tool_putaway", name: "Warehouse: Putaway" },
+  { id: "warehouse_tool_fulfill_order", name: "Warehouse: Fulfill Orders" },
+  { id: "warehouse_tool_ship_order", name: "Warehouse: Ship Orders" },
+  { id: "warehouse_tool_stock_transfer", name: "Warehouse: Stock Transfers" },
+  { id: "warehouse_tool_cycle_count", name: "Warehouse: Cycle Counting" },
+  { id: "warehouse_tool_issue_report", name: "Warehouse: Issue Reporting" },
+  { id: "warehouse_tool_picking_wave", name: "Warehouse: Picking Waves" },
+  { id: "warehouse_tool_replenishment", name: "Warehouse: Replenishment" },
+  { id: "warehouse_tool_returns", name: "Warehouse: Returns Processing" },
+  { id: "warehouse_tool_shipping_verification", name: "Warehouse: Shipping Verification" },
+  { id: "shopify_integration", name: "Shopify Integration" },
+  { id: "quickbooks_integration", name: "QuickBooks Integration" },
+  { id: "automation_rules", name: "Automation Rules" },
+  { id: "activity_logs", name: "Activity Logs" },
+  { id: "user_management", name: "User Management & RBAC" },
+  { id: "custom_roles", name: "Custom Roles" },
+  { id: "replenishment_management", name: "Auto-Replenishment" },
+  { id: "demand_forecasting", name: "Demand Forecasting" },
+  { id: "advanced_reports", name: "Advanced Reports" },
+  { id: "recipes_bom", name: "Recipes & Bills of Materials" },
+  { id: "multi_location", name: "Multi-Location Support" },
+  { id: "terms_of_service", name: "Terms of Service" },
+  { id: "privacy_policy", name: "Privacy Policy" },
+  { id: "refund_policy", name: "Refund Policy" },
+];
+
+export const getAllFeatureIds = (): string[] => ALL_APP_FEATURES.map(f => f.id);

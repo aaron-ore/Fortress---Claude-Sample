@@ -33,10 +33,11 @@ const FolderSetupStep: React.FC<FolderSetupStepProps> = ({ onNext, onBack }) => 
     // Default color for new folders
     const defaultColor = "#4CAF50"; // Green
 
-    const newFolder: Omit<InventoryFolder, "id" | "createdAt" | "userId" | "organizationId"> = { // Create InventoryFolder object
+    const newFolder: Omit<InventoryFolder, "id" | "createdAt" | "userId" | "organizationId"> = {
       name: newFolderName.trim(),
       color: defaultColor,
-      // parentId, description, imageUrl, tags can be added via a more detailed dialog
+      locationType: 'warehouse',
+      isActive: true,
     };
 
     await addInventoryFolder(newFolder); // Updated context function

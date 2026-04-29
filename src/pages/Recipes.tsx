@@ -131,7 +131,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ open, onClose, initialRecipe })
   const { createRecipe, updateRecipe, fetchRecipeWithIngredients } = useRecipes();
   const { units, seedDefaultUnits } = useUnitOfMeasure();
   const { inventoryFolders } = useOnboarding();
-  const { inventoryItems } = useInventory();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");

@@ -327,9 +327,11 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
     setIsUploading(true);
 
     for (const folderName of newFoldersToConfirm) { // Iterate over folder names
-      const newFolder: Omit<InventoryFolder, "id" | "createdAt" | "userId" | "organizationId"> = { // Create InventoryFolder object
+      const newFolder: Omit<InventoryFolder, "id" | "createdAt" | "userId" | "organizationId"> = {
         name: folderName,
-        color: "#CCCCCC", // Default color
+        color: "#CCCCCC",
+        locationType: 'warehouse',
+        isActive: true,
       };
       await addInventoryFolder(newFolder); // Use addInventoryFolder
     }

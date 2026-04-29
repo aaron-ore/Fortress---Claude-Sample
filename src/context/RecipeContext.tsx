@@ -40,8 +40,10 @@ export interface Recipe {
   ingredients?: RecipeIngredient[];
 }
 
-export type RecipeInput = Omit<Recipe, 'id' | 'organizationId' | 'userId' | 'createdAt' | 'updatedAt'> & {
-  ingredients: Omit<RecipeIngredient, 'id' | 'recipeId' | 'organizationId' | 'createdAt'>[];
+export type RecipeIngredientInput = Omit<RecipeIngredient, 'id' | 'recipeId' | 'organizationId' | 'createdAt'>;
+
+export type RecipeInput = Omit<Recipe, 'id' | 'organizationId' | 'userId' | 'createdAt' | 'updatedAt' | 'ingredients'> & {
+  ingredients: RecipeIngredientInput[];
 };
 
 interface RecipeContextType {
