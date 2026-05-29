@@ -154,7 +154,8 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         shipping_method: updatedOrder.shippingMethod,
         delivery_route: updatedOrder.deliveryRoute,
         items: updatedOrder.items,
-        location_id: updatedOrder.locationId || null,
+        // Only send location_id when set, so this works before the migration is applied.
+        ...(updatedOrder.locationId ? { location_id: updatedOrder.locationId } : {}),
         terms: updatedOrder.terms,
         putaway_status: updatedOrder.putawayStatus,
       })
@@ -205,7 +206,8 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         shipping_method: newOrder.shippingMethod,
         delivery_route: newOrder.deliveryRoute,
         items: newOrder.items,
-        location_id: newOrder.locationId || null,
+        // Only send location_id when set, so this works before the migration is applied.
+        ...(newOrder.locationId ? { location_id: newOrder.locationId } : {}),
         terms: newOrder.terms,
         user_id: session.user.id,
         organization_id: profile.organizationId,
