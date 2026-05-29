@@ -37,6 +37,7 @@ export interface InventoryItem {
   incomingStock: number;
   unitCost: number;
   retailPrice: number;
+  usageUnitId?: string; // Variance: canonical usage unit; unitCost is per this unit
   folderId: string;
   pickingBinFolderId: string;
   tags?: string[];
@@ -120,6 +121,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       incomingStock: isNaN(incomingStock) ? 0 : incomingStock,
       unitCost: isNaN(unitCost) ? 0 : unitCost,
       retailPrice: isNaN(retailPrice) ? 0 : retailPrice,
+      usageUnitId: item.usage_unit_id || undefined,
       folderId: item.folder_id || "",
       pickingBinFolderId: item.picking_bin_folder_id || item.folder_id || "",
       tags: item.tags || undefined,
@@ -280,6 +282,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         incoming_stock: 0,
         unit_cost: item.unitCost,
         retail_price: item.retailPrice,
+        usage_unit_id: item.usageUnitId || null,
         folder_id: item.folderId,
         picking_bin_folder_id: item.pickingBinFolderId,
         tags: item.tags,
@@ -350,6 +353,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         incoming_stock: updatedItem.incomingStock,
         unit_cost: updatedItem.unitCost,
         retail_price: updatedItem.retailPrice,
+        usage_unit_id: updatedItem.usageUnitId || null,
         folder_id: updatedItem.folderId,
         picking_bin_folder_id: updatedItem.pickingBinFolderId,
         tags: updatedItem.tags,
