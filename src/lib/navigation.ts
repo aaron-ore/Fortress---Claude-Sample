@@ -21,6 +21,7 @@ import {
   Upload, // NEW: Import Upload icon
   Utensils, // NEW: Import Utensils icon
   Wrench, // Changed from Tool to Wrench icon for Advanced Tools
+  TrendingDown, // Variance Finder
 } from "lucide-react";
 
 export interface NavItem {
@@ -47,6 +48,16 @@ export const mainNavItems: NavItem[] = [
       { title: "Locations", href: "/folders", icon: MapPin },
       { title: "Recipes (BOM)", href: "/recipes", icon: Utensils, tag: "NEW" }, // NEW: Recipes link
       { title: "Customer Import", href: "/customer-import", icon: Upload, adminOnly: true, tag: "NEW" },
+    ],
+  },
+  {
+    title: "Food Cost Variance",
+    href: "/variance",
+    icon: TrendingDown,
+    isParent: true,
+    tag: "NEW",
+    children: [
+      { title: "Sales Import", href: "/variance/sales-import", icon: Upload },
     ],
   },
   { title: "Orders", href: "/orders", icon: Receipt },
