@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Claude Code transient files
+.claude/scheduled_tasks.lock

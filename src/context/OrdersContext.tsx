@@ -14,6 +14,9 @@ export interface POItem {
   quantity: number;
   unitPrice: number;
   inventoryItemId?: string;
+  // Variance: actual per-unit cost paid at receipt. Drives variance pricing.
+  // Falls back to item.unit_cost when absent (e.g. older orders).
+  unitCostAtReceipt?: number;
 }
 
 export interface OrderItem {
@@ -30,6 +33,7 @@ export interface OrderItem {
   shippingMethod: "Standard" | "Express";
   deliveryRoute?: string;
   items: POItem[];
+  locationId?: string | null; // Variance: attributes purchases to a location/period
   organizationId: string | null;
   terms?: string;
   putawayStatus?: "Pending" | "Completed" | "N/A" | null;
@@ -64,6 +68,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
       quantity: parseInt(item.quantity || '0'),
       unitPrice: parseFloat(item.unitPrice || '0'),
       inventoryItemId: item.inventoryItemId || undefined,
+      unitCostAtReceipt: item.unitCostAtReceipt != null ? parseFloat(item.unitCostAtReceipt) : undefined,
     }));
 
     const validatedCreatedAt = parseAndValidateDate(order.created_at);
@@ -86,6 +91,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
       shippingMethod: order.shipping_method || "Standard",
       deliveryRoute: order.delivery_route || undefined,
       items: items,
+      locationId: order.location_id || undefined,
       organizationId: order.organization_id,
       terms: order.terms || undefined,
       putawayStatus: order.putaway_status || undefined,
@@ -148,6 +154,8 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         shipping_method: updatedOrder.shippingMethod,
         delivery_route: updatedOrder.deliveryRoute,
         items: updatedOrder.items,
+        // Only send location_id when set, so this works before the migration is applied.
+        ...(updatedOrder.locationId ? { location_id: updatedOrder.locationId } : {}),
         terms: updatedOrder.terms,
         putaway_status: updatedOrder.putawayStatus,
       })
@@ -198,6 +206,8 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({
         shipping_method: newOrder.shippingMethod,
         delivery_route: newOrder.deliveryRoute,
         items: newOrder.items,
+        // Only send location_id when set, so this works before the migration is applied.
+        ...(newOrder.locationId ? { location_id: newOrder.locationId } : {}),
         terms: newOrder.terms,
         user_id: session.user.id,
         organization_id: profile.organizationId,
