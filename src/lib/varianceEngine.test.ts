@@ -4,6 +4,7 @@ import {
   safeOutputQuantity,
   type VarianceInput,
 } from './varianceEngine';
+import { RESTAURANT_WEEK } from './varianceEngine.fixtures';
 
 describe('safeOutputQuantity', () => {
   it('passes a positive yield through unchanged', () => {
@@ -170,6 +171,31 @@ describe('computeVariance — guards and setup errors', () => {
     expect(salt.actualUsage).toBe(10); // 100 + 0 − 90
   });
 
+  it('handles an item sold but never counted (counts default to 0)', () => {
+    const r = computeVariance({
+      items: [{ id: 'basil', name: 'Basil', usageUnitId: 'g', unitCost: 0.2 }],
+      recipes: [
+        {
+          id: 'pesto',
+          outputQuantity: 1,
+          ingredients: [{ inventoryItemId: 'basil', quantity: 10, unitId: 'g' }],
+        },
+      ],
+      sales: [{ recipeId: 'pesto', qtySold: 4 }],
+      counts: [], // never counted
+      purchases: [{ inventoryItemId: 'basil', quantity: 50, unitCostAtReceipt: 0.25 }],
+    });
+    const basil = r.lines.find((l) => l.itemId === 'basil')!;
+    expect(basil.beginningQty).toBe(0);
+    expect(basil.endingQty).toBe(0);
+    expect(basil.theoreticalUsage).toBeCloseTo(40, 10); // 4 × 10
+    expect(basil.actualUsage).toBeCloseTo(50, 10); // 0 + 50 − 0
+    expect(basil.varianceUnits).toBeCloseTo(10, 10);
+    expect(basil.priceSource).toBe('receipt');
+    expect(basil.varianceDollars).toBeCloseTo(2.5, 10); // 10 × 0.25
+    expect(basil.hasSetupError).toBe(false);
+  });
+
   it('flags a recipe-ingredient unit mismatch and excludes it from the hero number', () => {
     const r = computeVariance({
       // item usage unit is kg, but the recipe expresses it in g => mismatch
@@ -221,5 +247,42 @@ describe('computeVariance — guards and setup errors', () => {
     // (8×10 + 2×15) / 10 = 110/10 = 11.00, NOT the 9.00 fallback
     expect(beef.priceSource).toBe('receipt');
     expect(beef.unitPrice).toBeCloseTo(11.0, 10);
+  });
+});
+
+describe('computeVariance — realistic one-week restaurant period', () => {
+  // One location, one week. Beef (kg), Wine (btl), Olive oil (L).
+  // Mirrors the end-to-end demo: beef is received twice at different costs,
+  // wine once, and olive oil not at all (so it prices off unit_cost).
+  const result = computeVariance(RESTAURANT_WEEK);
+  const beef = result.lines.find((l) => l.itemId === 'beef')!;
+  const wine = result.lines.find((l) => l.itemId === 'wine')!;
+  const oil = result.lines.find((l) => l.itemId === 'oil')!;
+
+  it('theoretical usage rolls up across multiple menu items and batch yields', () => {
+    expect(beef.theoreticalUsage).toBeCloseTo(54, 10); // 120×0.3 + 60×1.2/4
+    expect(wine.theoreticalUsage).toBeCloseTo(47.5, 10); // 60×0.5/4 + 200×1/5
+    expect(oil.theoreticalUsage).toBeCloseTo(5.55, 10); // 120×0.02 + 60×0.05/4 + 80×0.03
+  });
+
+  it('actual usage and weighted-avg / fallback pricing per item', () => {
+    expect(beef.actualUsage).toBeCloseTo(62, 10); // 20 + 50 − 8
+    expect(beef.priceSource).toBe('receipt');
+    expect(beef.unitPrice).toBeCloseTo(12.7, 10); // (30×12.5 + 20×13)/50
+
+    expect(wine.actualUsage).toBeCloseTo(59, 10); // 60 + 24 − 25
+    expect(wine.unitPrice).toBeCloseTo(8.5, 10);
+
+    expect(oil.actualUsage).toBeCloseTo(6, 10); // 15 + 0 − 9
+    expect(oil.priceSource).toBe('fallback');
+    expect(oil.unitPrice).toBeCloseTo(7.0, 10);
+  });
+
+  it('variance dollars per item and the summed hero number', () => {
+    expect(beef.varianceDollars).toBeCloseTo(101.6, 10); // 8 × 12.70
+    expect(wine.varianceDollars).toBeCloseTo(97.75, 10); // 11.5 × 8.50
+    expect(oil.varianceDollars).toBeCloseTo(3.15, 10); // 0.45 × 7.00
+    expect(result.heroNumber).toBeCloseTo(202.5, 10);
+    expect(result.setupErrors).toHaveLength(0);
   });
 });
