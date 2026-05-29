@@ -58,6 +58,7 @@ export const mainNavItems: NavItem[] = [
     tag: "NEW",
     children: [
       { title: "Sales Import", href: "/variance/sales-import", icon: Upload },
+      { title: "POS Mapping", href: "/variance/mapping", icon: Plug },
     ],
   },
   { title: "Orders", href: "/orders", icon: Receipt },

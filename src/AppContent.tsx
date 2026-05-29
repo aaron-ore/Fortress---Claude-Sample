@@ -23,6 +23,7 @@ import { UnitOfMeasureProvider } from "./context/UnitOfMeasureContext"; // NEW: 
 import { RecipeProvider } from "./context/RecipeContext"; // NEW: Import RecipeProvider
 import { VariancePeriodProvider } from "./context/VariancePeriodContext"; // Variance Finder
 import { SalesImportProvider } from "./context/SalesImportContext"; // Variance Finder
+import { PosMappingProvider } from "./context/PosMappingContext"; // Variance Finder
 import ErrorBoundary from "./components/ErrorBoundary";
 import PrintWrapper from "./components/PrintWrapper";
 import { Loader2 } from "lucide-react";
@@ -70,6 +71,7 @@ const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const CustomerImport = lazy(() => import("./pages/CustomerImport"));
 const Recipes = lazy(() => import("./pages/Recipes")); // NEW: Lazy import for Recipes
 const VarianceSalesImport = lazy(() => import("./pages/variance/VarianceSalesImport")); // Variance Finder
+const VariancePosMapping = lazy(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
 
 
 // Fallback component for Suspense
@@ -95,6 +97,7 @@ const AuthenticatedApp = () => {
                         <RecipeProvider> {/* NEW: RecipeProvider */}
                           <VariancePeriodProvider> {/* Variance Finder */}
                           <SalesImportProvider> {/* Variance Finder */}
+                          <PosMappingProvider> {/* Variance Finder */}
                           <AutomationProvider>
                             <Suspense fallback={<LoadingFallback />}>
                               {/* This is the main layout for authenticated users */}
@@ -130,6 +133,7 @@ const AuthenticatedApp = () => {
                                   <Route path="customer-import" element={<CustomerImport />} />
                                   <Route path="recipes" element={<Recipes />} /> {/* NEW: Route for Recipes */}
                                   <Route path="variance/sales-import" element={<VarianceSalesImport />} /> {/* Variance Finder */}
+                                  <Route path="variance/mapping" element={<VariancePosMapping />} /> {/* Variance Finder */}
                                   <Route path="terms-of-service" element={<TermsOfService />} />
                                   <Route path="privacy-policy" element={<PrivacyPolicy />} />
                                   <Route path="refund-policy" element={<RefundPolicy />} />
@@ -138,6 +142,7 @@ const AuthenticatedApp = () => {
                               </Routes>
                             </Suspense>
                           </AutomationProvider>
+                          </PosMappingProvider> {/* Variance Finder */}
                           </SalesImportProvider> {/* Variance Finder */}
                           </VariancePeriodProvider> {/* Variance Finder */}
                         </RecipeProvider> {/* NEW: RecipeProvider */}
