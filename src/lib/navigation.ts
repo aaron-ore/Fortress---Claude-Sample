@@ -57,6 +57,7 @@ export const mainNavItems: NavItem[] = [
     isParent: true,
     tag: "NEW",
     children: [
+      { title: "Variance Report", href: "/variance", icon: TrendingDown },
       { title: "Sales Import", href: "/variance/sales-import", icon: Upload },
       { title: "POS Mapping", href: "/variance/mapping", icon: Plug },
       { title: "Physical Counts", href: "/variance/counts", icon: Package },

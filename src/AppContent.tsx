@@ -74,6 +74,7 @@ const Recipes = lazy(() => import("./pages/Recipes")); // NEW: Lazy import for R
 const VarianceSalesImport = lazy(() => import("./pages/variance/VarianceSalesImport")); // Variance Finder
 const VariancePosMapping = lazy(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
 const VarianceCounts = lazy(() => import("./pages/variance/VarianceCounts")); // Variance Finder
+const VarianceReport = lazy(() => import("./pages/variance/VarianceReport")); // Variance Finder
 
 
 // Fallback component for Suspense
@@ -138,6 +139,7 @@ const AuthenticatedApp = () => {
                                   <Route path="variance/sales-import" element={<VarianceSalesImport />} /> {/* Variance Finder */}
                                   <Route path="variance/mapping" element={<VariancePosMapping />} /> {/* Variance Finder */}
                                   <Route path="variance/counts" element={<VarianceCounts />} /> {/* Variance Finder */}
+                                  <Route path="variance" element={<VarianceReport />} /> {/* Variance Finder */}
                                   <Route path="terms-of-service" element={<TermsOfService />} />
                                   <Route path="privacy-policy" element={<PrivacyPolicy />} />
                                   <Route path="refund-policy" element={<RefundPolicy />} />
