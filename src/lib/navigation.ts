@@ -37,7 +37,7 @@ export interface NavItem {
 }
 
 export const mainNavItems: NavItem[] = [
-  { title: "Dashboard", href: "/", icon: LayoutDashboard },
+  { title: "Dashboard", href: "/home", icon: LayoutDashboard },
   {
     title: "Inventory",
     href: "/inventory",
