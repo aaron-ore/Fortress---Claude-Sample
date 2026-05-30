@@ -35,46 +35,69 @@ import LiveChatWidget from "./components/LiveChatWidget";
 import Footer from "./components/Footer"; // NEW: Import Footer
 import { useAuth } from "./context/AuthContext"; // NEW: Import useAuth
 
+// Wrap React.lazy so a failed dynamic import — almost always a stale chunk after a
+// new deploy (old index.html requesting a hash that no longer exists) — triggers a
+// single full reload to fetch the fresh build, instead of a blank/broken page.
+type LazyFactory = Parameters<typeof lazy>[0];
+function lazyWithRetry(factory: LazyFactory) {
+  return lazy(async () => {
+    const KEY = "chunk-reload-once";
+    try {
+      const mod = await factory();
+      sessionStorage.removeItem(KEY);
+      return mod;
+    } catch (err) {
+      if (!sessionStorage.getItem(KEY)) {
+        sessionStorage.setItem(KEY, "1");
+        window.location.reload();
+        // Never resolves; the reload replaces the page.
+        return await new Promise<Awaited<ReturnType<LazyFactory>>>(() => {});
+      }
+      throw err;
+    }
+  });
+}
+
 // Dynamically import all page components for code splitting
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Inventory = lazy(() => import("./pages/Inventory"));
-const Orders = lazy(() => import("./pages/Orders"));
-const Reports = lazy(() => import("./pages/Reports"));
-const Settings = lazy(() => import("./pages/Settings"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const CreatePurchaseOrder = lazy(() => import("./pages/CreatePurchaseOrder"));
-const EditInventoryItem = lazy(() => import("./pages/EditInventoryItem"));
-const EditPurchaseOrder = lazy(() => import("./pages/EditPurchaseOrder"));
-const Auth = lazy(() => import("./pages/Auth"));
-const MyProfile = lazy(() => import("./pages/MyProfile"));
-const AccountSettings = lazy(() => import("./pages/AccountSettings"));
-const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
-const BillingSubscriptions = lazy(() => import("./pages/BillingSubscriptions"));
-const HelpCenter = lazy(() => import("./pages/HelpCenter"));
-const WhatsNew = lazy(() => import("./pages/WhatsNew"));
-const Vendors = lazy(() => import("./pages/Vendors"));
-const Users = lazy(() => import("./pages/Users"));
-const CreateInvoice = lazy(() => import("./pages/CreateInvoice"));
-const SetupInstructions = lazy(() => import("./pages/SetupInstructions"));
-const WarehouseOperationsPage = lazy(() => import("./pages/WarehouseOperationsPage"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const Folders = lazy(() => import("./pages/Locations"));
-const Customers = lazy(() => import("./pages/Customers"));
-const Integrations = lazy(() => import("./pages/Integrations"));
-const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
-const Automation = lazy(() => import("./pages/Automation"));
-const ItemHistoryPage = lazy(() => import("./pages/ItemHistoryPage"));
-const FolderContentPage = lazy(() => import("./pages/FolderContentPage"));
-const ActivityLogs = lazy(() => import("./pages/ActivityLogs"));
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
+const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
+const Inventory = lazyWithRetry(() => import("./pages/Inventory"));
+const Orders = lazyWithRetry(() => import("./pages/Orders"));
+const Reports = lazyWithRetry(() => import("./pages/Reports"));
+const Settings = lazyWithRetry(() => import("./pages/Settings"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const CreatePurchaseOrder = lazyWithRetry(() => import("./pages/CreatePurchaseOrder"));
+const EditInventoryItem = lazyWithRetry(() => import("./pages/EditInventoryItem"));
+const EditPurchaseOrder = lazyWithRetry(() => import("./pages/EditPurchaseOrder"));
+const Auth = lazyWithRetry(() => import("./pages/Auth"));
+const MyProfile = lazyWithRetry(() => import("./pages/MyProfile"));
+const AccountSettings = lazyWithRetry(() => import("./pages/AccountSettings"));
+const NotificationsPage = lazyWithRetry(() => import("./pages/NotificationsPage"));
+const BillingSubscriptions = lazyWithRetry(() => import("./pages/BillingSubscriptions"));
+const HelpCenter = lazyWithRetry(() => import("./pages/HelpCenter"));
+const WhatsNew = lazyWithRetry(() => import("./pages/WhatsNew"));
+const Vendors = lazyWithRetry(() => import("./pages/Vendors"));
+const Users = lazyWithRetry(() => import("./pages/Users"));
+const CreateInvoice = lazyWithRetry(() => import("./pages/CreateInvoice"));
+const SetupInstructions = lazyWithRetry(() => import("./pages/SetupInstructions"));
+const WarehouseOperationsPage = lazyWithRetry(() => import("./pages/WarehouseOperationsPage"));
+const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
+const Folders = lazyWithRetry(() => import("./pages/Locations"));
+const Customers = lazyWithRetry(() => import("./pages/Customers"));
+const Integrations = lazyWithRetry(() => import("./pages/Integrations"));
+const OnboardingPage = lazyWithRetry(() => import("./pages/OnboardingPage"));
+const Automation = lazyWithRetry(() => import("./pages/Automation"));
+const ItemHistoryPage = lazyWithRetry(() => import("./pages/ItemHistoryPage"));
+const FolderContentPage = lazyWithRetry(() => import("./pages/FolderContentPage"));
+const ActivityLogs = lazyWithRetry(() => import("./pages/ActivityLogs"));
+const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
+const RefundPolicy = lazyWithRetry(() => import("./pages/RefundPolicy"));
 // Customer Import hidden (legacy B2B stub, out of scope for the variance pivot)
-const Recipes = lazy(() => import("./pages/Recipes")); // NEW: Lazy import for Recipes
-const VarianceSalesImport = lazy(() => import("./pages/variance/VarianceSalesImport")); // Variance Finder
-const VariancePosMapping = lazy(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
-const VarianceCounts = lazy(() => import("./pages/variance/VarianceCounts")); // Variance Finder
-const VarianceReport = lazy(() => import("./pages/variance/VarianceReport")); // Variance Finder
+const Recipes = lazyWithRetry(() => import("./pages/Recipes")); // NEW: Lazy import for Recipes
+const VarianceSalesImport = lazyWithRetry(() => import("./pages/variance/VarianceSalesImport")); // Variance Finder
+const VariancePosMapping = lazyWithRetry(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
+const VarianceCounts = lazyWithRetry(() => import("./pages/variance/VarianceCounts")); // Variance Finder
+const VarianceReport = lazyWithRetry(() => import("./pages/variance/VarianceReport")); // Variance Finder
 
 
 // Fallback component for Suspense
