@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "PowerShell(Head -60)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\User\\\\Desktop\\\\Fortress - Claude Sample\\\\src\" -Name -Recurse | Where-Object { $_ -match \"Context|Recipe|Unit\" })"
-    ]
-  }
-}
