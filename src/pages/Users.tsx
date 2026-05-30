@@ -15,7 +15,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { Users as UsersIcon, Trash2, Copy, Settings as SettingsIcon, Loader2, ArrowRightLeft } from "lucide-react"; // Added ArrowRightLeft
 import { useProfile, UserProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, supabaseFunctionsUrl } from "@/lib/supabaseClient";
 import ManageCustomRolesDialog from "@/components/ManageCustomRolesDialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import TransferAdminDialog from "@/components/TransferAdminDialog"; // NEW: Import TransferAdminDialog
@@ -60,7 +60,7 @@ const Users: React.FC = () => {
       const payload = JSON.stringify({ targetUserId: userToDelete.id });
       console.log("[Users.tsx] Sending payload to delete-user Edge Function:", payload);
 
-      const edgeFunctionUrl = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/delete-user`;
+      const edgeFunctionUrl = `${supabaseFunctionsUrl}/delete-user`;
       const response = await fetch(edgeFunctionUrl, {
         method: 'POST',
         headers: {

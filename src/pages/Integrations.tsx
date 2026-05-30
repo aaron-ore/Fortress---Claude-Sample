@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plug, CheckCircle, RefreshCw, Loader2, MapPin, Link as LinkIcon, Trash2, Edit, Hourglass, ExternalLink } from "lucide-react";
 import { useProfile } from "@/context/ProfileContext";
 import { showError, showSuccess, showInfo } from "@/utils/toast"; // Added showInfo
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, supabaseFunctionsUrl } from "@/lib/supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useOnboarding } from "@/context/OnboardingContext";
@@ -188,7 +188,7 @@ const Integrations: React.FC = () => {
       return;
     }
 
-    const redirectUri = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/quickbooks-oauth-callback`;
+    const redirectUri = `${supabaseFunctionsUrl}/quickbooks-oauth-callback`;
     
     const scope = "com.intuit.quickbooks.accounting openid profile email address phone";
     const responseType = "code";
@@ -309,7 +309,7 @@ const Integrations: React.FC = () => {
       return;
     }
 
-    const redirectUri = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/shopify-oauth-callback`;
+    const redirectUri = `${supabaseFunctionsUrl}/shopify-oauth-callback`;
     
     const scopes = [
       "read_products",

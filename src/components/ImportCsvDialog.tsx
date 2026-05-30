@@ -20,7 +20,7 @@ import { generateInventoryCsvTemplate } from "@/utils/csvGenerator";
 import DuplicateItemsWarningDialog from "@/components/DuplicateItemsWarningDialog";
 import ConfirmDialog from "@/components/ConfirmDialog";
 // Removed parseLocationString as it's not directly used for folders
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, supabaseFunctionsUrl } from "@/lib/supabaseClient";
 import { uploadFileToSupabase } from "@/integrations/supabase/storage";
 import { useProfile } from "@/context/ProfileContext"; // NEW: Import useProfile
 
@@ -139,7 +139,7 @@ const ImportCsvDialog: React.FC<ImportCsvDialogProps> = ({
         throw new Error("Session expired. Log in again.");
       }
 
-      const edgeFunctionUrl = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/process-csv-inventory-upload`;
+      const edgeFunctionUrl = `${supabaseFunctionsUrl}/process-csv-inventory-upload`;
       const response = await fetch(edgeFunctionUrl, {
         method: 'POST',
         headers: {

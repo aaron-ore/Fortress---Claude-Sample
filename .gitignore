@@ -24,6 +24,11 @@ dist-ssr
 *.sw?
 .vercel
 
+# Secrets / environment (never commit the backend URL or keys)
+.env
+.env.*
+!.env.example
+
 # Claude Code transient files
 .claude/scheduled_tasks.lock
 .claude/settings.local.json

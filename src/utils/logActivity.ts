@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, supabaseFunctionsUrl } from "@/lib/supabaseClient";
 import { UserProfile } from "@/context/ProfileContext";
 
 interface LogDetails {
@@ -24,7 +24,7 @@ export const logActivity = async (
       return;
     }
 
-    const edgeFunctionUrl = `https://nojumocxivfjsbqnnkqe.supabase.co/functions/v1/log-activity`;
+    const edgeFunctionUrl = `${supabaseFunctionsUrl}/log-activity`;
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
