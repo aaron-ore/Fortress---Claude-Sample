@@ -389,7 +389,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       .select("*")
       .eq("organization_id", profile.organizationId)
       .eq("name", trimmedName)
-      .single();
+      .maybeSingle();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
       console.error("Error checking for existing folder:", fetchError);

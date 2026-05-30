@@ -25,6 +25,7 @@ import { VariancePeriodProvider } from "./context/VariancePeriodContext"; // Var
 import { SalesImportProvider } from "./context/SalesImportContext"; // Variance Finder
 import { PosMappingProvider } from "./context/PosMappingContext"; // Variance Finder
 import { InventoryCountProvider } from "./context/InventoryCountContext"; // Variance Finder
+import { PreferencesProvider } from "./context/PreferencesContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PrintWrapper from "./components/PrintWrapper";
 import { Loader2 } from "lucide-react";
@@ -110,6 +111,7 @@ const LoadingFallback = () => (
 
 const AuthenticatedApp = () => {
   return (
+    <PreferencesProvider>
     <SidebarProvider>
       <OrdersProvider>
         <VendorProvider>
@@ -187,6 +189,7 @@ const AuthenticatedApp = () => {
         </VendorProvider>
       </OrdersProvider>
     </SidebarProvider>
+    </PreferencesProvider>
   );
 };
 

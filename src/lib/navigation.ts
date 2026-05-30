@@ -30,6 +30,7 @@ export interface NavItem {
   isParent?: boolean;
   children?: NavItem[];
   adminOnly?: boolean;
+  warehouseOnly?: boolean; // hidden unless warehouse features are enabled
   mobileOnly?: boolean;
   action?: () => void;
   tag?: string;
@@ -73,7 +74,7 @@ export const mainNavItems: NavItem[] = [
       { title: "Customers", href: "/customers", icon: User },
       { title: "Integrations", href: "/integrations", icon: Plug },
       { title: "Automation", href: "/automation", icon: Zap, adminOnly: true },
-      { title: "Warehouse Operations", href: "/warehouse-operations", icon: Warehouse },
+      { title: "Warehouse Operations", href: "/warehouse-operations", icon: Warehouse, warehouseOnly: true },
     ],
   },
 ];

@@ -11,15 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useProfile } from "@/context/ProfileContext";
 import { showError, showSuccess } from "@/utils/toast";
-import { Loader2, Palette, Settings as SettingsIcon, ImageIcon, X } from "lucide-react";
+import { Loader2, Palette, Settings as SettingsIcon, ImageIcon, X, Warehouse } from "lucide-react";
 import { uploadFileToSupabase, getPublicUrlFromSupabase, getFilePathFromPublicUrl } from "@/integrations/supabase/storage";
 import { supabase } from "@/lib/supabaseClient";
+import { Switch } from "@/components/ui/switch";
+import { usePreferences } from "@/context/PreferencesContext";
 
 void getPublicUrlFromSupabase;
 
 const Settings: React.FC = () => {
   const { setTheme } = useTheme();
   const { profile, updateCompanyProfile, updateOrganizationTheme } = useProfile();
+  const { warehouseEnabled, setWarehouseEnabled } = usePreferences();
 
   const [companyName, setCompanyName] = useState(profile?.companyProfile?.companyName || "");
   const [companyAddress, setCompanyAddress] = useState(profile?.companyProfile?.companyAddress || "");
@@ -321,6 +324,28 @@ const Settings: React.FC = () => {
           </Button>
         </CardContent>
       </Card>
+
+      {profile?.role === 'admin' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Warehouse className="h-5 w-5 text-primary" /> Workspace Features
+            </CardTitle>
+            <CardDescription>Fortress is restaurant-first. Turn this on if you also run warehouse operations.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between rounded-lg border border-border p-4">
+              <div className="space-y-0.5 pr-4">
+                <Label className="text-base">Enable warehouse features</Label>
+                <p className="text-sm text-muted-foreground">
+                  Shows the Warehouse Operations tools in the sidebar. Off by default (restaurant-first). Saved on this device.
+                </p>
+              </div>
+              <Switch checked={warehouseEnabled} onCheckedChange={setWarehouseEnabled} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {profile?.role === 'admin' && (
         <Card>
