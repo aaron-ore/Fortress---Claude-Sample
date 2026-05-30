@@ -69,7 +69,7 @@ const ActivityLogs = lazy(() => import("./pages/ActivityLogs"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
-const CustomerImport = lazy(() => import("./pages/CustomerImport"));
+// Customer Import hidden (legacy B2B stub, out of scope for the variance pivot)
 const Recipes = lazy(() => import("./pages/Recipes")); // NEW: Lazy import for Recipes
 const VarianceSalesImport = lazy(() => import("./pages/variance/VarianceSalesImport")); // Variance Finder
 const VariancePosMapping = lazy(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
@@ -136,7 +136,6 @@ const AuthenticatedApp = () => {
                                   <Route path="folders/:folderId" element={<FolderContentPage />} />
                                   <Route path="integrations" element={<Integrations />} />
                                   <Route path="automation" element={<Automation />} />
-                                  <Route path="customer-import" element={<CustomerImport />} />
                                   <Route path="recipes" element={<Recipes />} /> {/* NEW: Route for Recipes */}
                                   <Route path="variance/sales-import" element={<VarianceSalesImport />} /> {/* Variance Finder */}
                                   <Route path="variance/mapping" element={<VariancePosMapping />} /> {/* Variance Finder */}

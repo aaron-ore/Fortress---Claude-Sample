@@ -47,7 +47,6 @@ export const mainNavItems: NavItem[] = [
       { title: "All Items", href: "/inventory", icon: Package },
       { title: "Locations", href: "/folders", icon: MapPin },
       { title: "Recipes (BOM)", href: "/recipes", icon: Utensils, tag: "NEW" }, // NEW: Recipes link
-      { title: "Customer Import", href: "/customer-import", icon: Upload, adminOnly: true, tag: "NEW" },
     ],
   },
   {
