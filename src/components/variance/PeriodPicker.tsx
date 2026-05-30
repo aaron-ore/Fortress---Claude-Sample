@@ -15,6 +15,12 @@ interface PeriodPickerProps {
   canManage?: boolean;
 }
 
+// "2026-05-24" -> "May 24" (parsed at local midnight to avoid TZ drift)
+const fmt = (d: string) => {
+  const dt = new Date(`${d}T00:00:00`);
+  return isNaN(dt.getTime()) ? d : dt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+};
+
 const PeriodPicker: React.FC<PeriodPickerProps> = ({ value, onChange, canManage = true }) => {
   const { periods, createPeriod } = useVariancePeriods();
   const { inventoryFolders } = useOnboarding();
@@ -26,8 +32,6 @@ const PeriodPicker: React.FC<PeriodPickerProps> = ({ value, onChange, canManage 
   const [locationId, setLocationId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-
-  const locationName = (id: string) => inventoryFolders.find((f) => f.id === id)?.name || "Unknown location";
 
   const handleCreate = async () => {
     if (!name.trim()) return showError("Period name is required.");
@@ -46,19 +50,19 @@ const PeriodPicker: React.FC<PeriodPickerProps> = ({ value, onChange, canManage 
 
   return (
     <div className="flex items-end gap-2">
-      <div className="space-y-1.5 flex-1 min-w-0">
+      <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground flex items-center gap-1">
           <CalendarRange className="h-3.5 w-3.5" /> Variance period
         </Label>
-        <Select value={value || "_none"} onValueChange={(v) => onChange(v === "_none" ? "" : v)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a period..." />
+        <Select value={value} onValueChange={onChange} disabled={periods.length === 0}>
+          <SelectTrigger className="w-[240px] sm:w-[260px]">
+            <SelectValue placeholder={periods.length ? "Select a period…" : "No periods yet"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="_none">Select a period...</SelectItem>
             {periods.map((p) => (
               <SelectItem key={p.id} value={p.id}>
-                {p.name} · {p.startDate} → {p.endDate} · {locationName(p.locationId)}
+                <span className="font-medium">{p.name}</span>
+                <span className="text-muted-foreground ml-2 text-xs">{fmt(p.startDate)} – {fmt(p.endDate)}</span>
               </SelectItem>
             ))}
           </SelectContent>

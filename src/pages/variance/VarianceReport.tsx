@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingDown, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { TrendingDown, Loader2, CalendarRange } from "lucide-react";
 import PeriodPicker from "@/components/variance/PeriodPicker";
 import VarianceResultView from "@/components/variance/VarianceResultView";
 import { useProfile } from "@/context/ProfileContext";
@@ -131,26 +131,36 @@ const VarianceReport = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <TrendingDown className="h-7 w-7 text-primary" /> Food Cost Variance
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Actual usage vs. theoretical usage, priced per item. The hero number is what you lost to variance this period.
-        </p>
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <TrendingDown className="h-7 w-7 text-primary" /> Food Cost Variance
+          </h1>
+          <p className="text-muted-foreground mt-1 max-w-xl">
+            Actual usage vs. theoretical usage, priced per item. The hero number is what you lost to variance this period.
+          </p>
+        </div>
+        <div className="lg:shrink-0">
+          <PeriodPicker value={periodId} onChange={setPeriodId} canManage={canManage} />
+        </div>
       </div>
-
-      <Card>
-        <CardHeader><CardTitle className="text-base">Period</CardTitle></CardHeader>
-        <CardContent><PeriodPicker value={periodId} onChange={setPeriodId} canManage={canManage} /></CardContent>
-      </Card>
 
       {loading ? (
         <div className="text-center py-16 text-muted-foreground flex items-center justify-center gap-2">
           <Loader2 className="h-5 w-5 animate-spin" /> Computing variance...
         </div>
       ) : !periodId ? (
-        <p className="text-muted-foreground text-sm">Select a period to see its variance.</p>
+        <Card className="border-dashed">
+          <CardContent className="py-16 text-center space-y-3">
+            <CalendarRange className="h-10 w-10 mx-auto text-muted-foreground/40" />
+            <p className="text-lg font-medium">{periods.length === 0 ? "No variance periods yet" : "Choose a period"}</p>
+            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+              {periods.length === 0
+                ? "Create a period with the New button above, then import sales, enter counts, and record purchases to see your variance."
+                : "Select a period from the picker above to see its food-cost variance."}
+            </p>
+          </CardContent>
+        </Card>
       ) : result ? (
         <VarianceResultView
           result={result}
