@@ -1,5 +1,5 @@
 import { useEffect, useRef, lazy, Suspense, useState, startTransition } from "react";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 // Import pdfContentComponents from the centralized config file
 import { pdfContentComponents } from "./lib/reportConfig";
@@ -107,7 +107,9 @@ const AuthenticatedApp = () => {
                               {/* This is the main layout for authenticated users */}
                               <Routes>
                                 <Route path="/" element={<Layout />}>
-                                  <Route index element={<Dashboard />} />
+                                  {/* "/" is the landing URL; authenticated users go to the dedicated /home route */}
+                                  <Route index element={<Navigate to="/home" replace />} />
+                                  <Route path="home" element={<Dashboard />} />
                                   <Route path="inventory" element={<Inventory />} />
                                   <Route path="inventory/:id" element={<EditInventoryItem />} />
                                   <Route path="inventory/:id/history" element={<ItemHistoryPage />} />
@@ -249,9 +251,9 @@ const AppContent = () => {
         // If on /auth, wait for profile to load to decide where to go
         if (!isLoadingProfile) {
           if (profile?.organizationId && profile.hasOnboardingWizardCompleted) {
-            console.log("[AppContent] Authenticated, onboarding complete, on /auth. Redirecting to dashboard.");
+            console.log("[AppContent] Authenticated, onboarding complete, on /auth. Redirecting to home.");
             startTransition(() => {
-              navigate('/', { replace: true });
+              navigate('/home', { replace: true });
             });
           } else {
             console.log("[AppContent] Authenticated, onboarding NOT complete, on /auth. Redirecting to onboarding.");
@@ -275,7 +277,7 @@ const AppContent = () => {
         profile.hasOnboardingWizardCompleted &&
         !profile.hasSeenUpgradePrompt &&
         profile.companyProfile?.plan === 'free' &&
-        location.pathname === '/'
+        location.pathname === '/home'
       ) {
         console.log("[AppContent] Showing upgrade prompt.");
         setIsUpgradePromptDialogOpen(true);
