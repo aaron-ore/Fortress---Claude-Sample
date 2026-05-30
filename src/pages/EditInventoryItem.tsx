@@ -28,6 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { useInventory } from "@/context/InventoryContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
+import { useUnitOfMeasure } from "@/context/UnitOfMeasureContext";
 import { PlusCircle, Loader2 } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
@@ -50,6 +51,7 @@ const formSchema = z.object({
   incomingStock: z.number().min(0, "Must be non-negative"),
   unitCost: z.number().min(0, "Must be non-negative"),
   retailPrice: z.number().min(0, "Must be non-negative"),
+  usageUnitId: z.string().optional(),
   folderId: z.string().min(1, "Folder is required"),
   tags: z.string().optional(),
   notes: z.string().optional(),
@@ -66,6 +68,7 @@ const EditInventoryItem = () => {
   const { categories, addCategory } = useCategories();
   const { vendors } = useVendors();
   const { inventoryFolders } = useOnboarding();
+  const { units, seedDefaultUnits } = useUnitOfMeasure();
   const { profile } = useProfile();
 
   const [itemNotFound, setItemNotFound] = useState(false);
@@ -94,6 +97,7 @@ const EditInventoryItem = () => {
         const defaultVals = {
           ...item,
           vendorId: item.vendorId || "null-vendor",
+          usageUnitId: item.usageUnitId || "none-unit",
           tags: item.tags?.join(', ') || "",
           notes: item.notes || "",
           imageUrl: item.imageUrl || null, // Ensure this is the public URL or null
@@ -106,6 +110,7 @@ const EditInventoryItem = () => {
         pickingBinQuantity: 0, overstockQuantity: 0, reorderLevel: 0, pickingReorderLevel: 0,
         committedStock: 0, incomingStock: 0, unitCost: 0, retailPrice: 0,
         folderId: "", tags: "", notes: "", imageUrl: null, vendorId: "null-vendor", // Set to null
+        usageUnitId: "none-unit",
         autoReorderEnabled: false, autoReorderQuantity: 0,
       };
     }, [item]),
@@ -121,6 +126,7 @@ const EditInventoryItem = () => {
       const resetValues = {
         ...item,
         vendorId: item.vendorId || "null-vendor",
+        usageUnitId: item.usageUnitId || "none-unit",
         tags: item.tags?.join(', ') || "",
         notes: item.notes || "",
         imageUrl: item.imageUrl || null, // Ensure this is the public URL or null
@@ -280,6 +286,7 @@ const EditInventoryItem = () => {
         notes: values.notes,
         imageUrl: finalImageUrlForDb, // Pass INTERNAL PATH or null to context
         vendorId: values.vendorId === "null-vendor" ? undefined : values.vendorId,
+        usageUnitId: values.usageUnitId === "none-unit" ? undefined : values.usageUnitId,
         barcodeUrl: finalBarcodeValue,
       });
       showSuccess("Item updated!");
@@ -586,6 +593,38 @@ const EditInventoryItem = () => {
                   )}
                 />
               </div>
+              {/* Canonical usage unit (food-cost variance) */}
+              <FormField
+                control={form.control}
+                name="usageUnitId"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Usage Unit (for variance)</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || "none-unit"} disabled={!canManageInventory}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select the unit this item is counted/used in" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none-unit">— None —</SelectItem>
+                        {units.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>{u.name} ({u.abbreviation})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      The canonical unit this item is counted, purchased, and used in. Unit Cost is the cost per this unit.
+                      {units.length === 0 && (
+                        <Button type="button" variant="link" size="sm" className="p-0 h-auto ml-1" onClick={seedDefaultUnits} disabled={!canManageInventory}>
+                          Seed default units
+                        </Button>
+                      )}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               {/* Folder Selection */}
               <FormField
                 control={form.control}

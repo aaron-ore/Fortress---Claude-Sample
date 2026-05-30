@@ -26,3 +26,4 @@ dist-ssr
 
 # Claude Code transient files
 .claude/scheduled_tasks.lock
+.claude/settings.local.json

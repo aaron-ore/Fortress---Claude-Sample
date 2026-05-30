@@ -21,6 +21,10 @@ import { InventoryProvider } from "./context/InventoryContext";
 import { AutomationProvider } from "./context/AutomationContext";
 import { UnitOfMeasureProvider } from "./context/UnitOfMeasureContext"; // NEW: Import UnitOfMeasureProvider
 import { RecipeProvider } from "./context/RecipeContext"; // NEW: Import RecipeProvider
+import { VariancePeriodProvider } from "./context/VariancePeriodContext"; // Variance Finder
+import { SalesImportProvider } from "./context/SalesImportContext"; // Variance Finder
+import { PosMappingProvider } from "./context/PosMappingContext"; // Variance Finder
+import { InventoryCountProvider } from "./context/InventoryCountContext"; // Variance Finder
 import ErrorBoundary from "./components/ErrorBoundary";
 import PrintWrapper from "./components/PrintWrapper";
 import { Loader2 } from "lucide-react";
@@ -67,6 +71,10 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const CustomerImport = lazy(() => import("./pages/CustomerImport"));
 const Recipes = lazy(() => import("./pages/Recipes")); // NEW: Lazy import for Recipes
+const VarianceSalesImport = lazy(() => import("./pages/variance/VarianceSalesImport")); // Variance Finder
+const VariancePosMapping = lazy(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
+const VarianceCounts = lazy(() => import("./pages/variance/VarianceCounts")); // Variance Finder
+const VarianceReport = lazy(() => import("./pages/variance/VarianceReport")); // Variance Finder
 
 
 // Fallback component for Suspense
@@ -90,6 +98,10 @@ const AuthenticatedApp = () => {
                     <InventoryProvider>
                       <UnitOfMeasureProvider> {/* NEW: UnitOfMeasureProvider */}
                         <RecipeProvider> {/* NEW: RecipeProvider */}
+                          <VariancePeriodProvider> {/* Variance Finder */}
+                          <SalesImportProvider> {/* Variance Finder */}
+                          <PosMappingProvider> {/* Variance Finder */}
+                          <InventoryCountProvider> {/* Variance Finder */}
                           <AutomationProvider>
                             <Suspense fallback={<LoadingFallback />}>
                               {/* This is the main layout for authenticated users */}
@@ -124,6 +136,10 @@ const AuthenticatedApp = () => {
                                   <Route path="automation" element={<Automation />} />
                                   <Route path="customer-import" element={<CustomerImport />} />
                                   <Route path="recipes" element={<Recipes />} /> {/* NEW: Route for Recipes */}
+                                  <Route path="variance/sales-import" element={<VarianceSalesImport />} /> {/* Variance Finder */}
+                                  <Route path="variance/mapping" element={<VariancePosMapping />} /> {/* Variance Finder */}
+                                  <Route path="variance/counts" element={<VarianceCounts />} /> {/* Variance Finder */}
+                                  <Route path="variance" element={<VarianceReport />} /> {/* Variance Finder */}
                                   <Route path="terms-of-service" element={<TermsOfService />} />
                                   <Route path="privacy-policy" element={<PrivacyPolicy />} />
                                   <Route path="refund-policy" element={<RefundPolicy />} />
@@ -132,6 +148,10 @@ const AuthenticatedApp = () => {
                               </Routes>
                             </Suspense>
                           </AutomationProvider>
+                          </InventoryCountProvider> {/* Variance Finder */}
+                          </PosMappingProvider> {/* Variance Finder */}
+                          </SalesImportProvider> {/* Variance Finder */}
+                          </VariancePeriodProvider> {/* Variance Finder */}
                         </RecipeProvider> {/* NEW: RecipeProvider */}
                       </UnitOfMeasureProvider> {/* NEW: UnitOfMeasureProvider */}
                     </InventoryProvider>

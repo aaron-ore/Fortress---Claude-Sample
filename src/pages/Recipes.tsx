@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   PlusCircle, Trash2, Edit, Search, Utensils, Clock, ChevronDown, ChevronUp,
-  Package, Plus, X, Loader2
+  Package, Plus, X, Loader2, AlertTriangle
 } from "lucide-react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useRecipes, Recipe, RecipeIngredient, RecipeInput } from "@/context/RecipeContext";
@@ -46,8 +46,21 @@ const IngredientRow: React.FC<IngredientRowProps> = ({ ing, index, onChange, onR
 
   const handleItemSelect = (itemId: string) => {
     const item = inventoryItems.find(i => i.id === itemId);
-    onChange(index, { ...ing, inventoryItemId: itemId, ingredientName: item?.name || ing.ingredientName });
+    // Default the ingredient unit to the item's canonical usage unit so recipe
+    // units line up with variance math (which does not auto-convert).
+    const usageUnit = item?.usageUnitId ? units.find(u => u.id === item.usageUnitId) : undefined;
+    onChange(index, {
+      ...ing,
+      inventoryItemId: itemId,
+      ingredientName: item?.name || ing.ingredientName,
+      ...(usageUnit ? { unitId: usageUnit.id, unitName: usageUnit.abbreviation } : {}),
+    });
   };
+
+  const selectedItem = ing.inventoryItemId ? inventoryItems.find(i => i.id === ing.inventoryItemId) : undefined;
+  const itemUsageUnitId = selectedItem?.usageUnitId;
+  const unitMismatch = !!selectedItem && !!itemUsageUnitId && !!ing.unitId && ing.unitId !== itemUsageUnitId;
+  const missingItemUnit = !!selectedItem && !itemUsageUnitId;
 
   const handleUnitSelect = (unitId: string) => {
     const unit = units.find(u => u.id === unitId);
@@ -55,7 +68,8 @@ const IngredientRow: React.FC<IngredientRowProps> = ({ ing, index, onChange, onR
   };
 
   return (
-    <div className="grid grid-cols-12 gap-2 items-start border border-border rounded-md p-2 bg-muted/20">
+    <div className="border border-border rounded-md p-2 bg-muted/20">
+    <div className="grid grid-cols-12 gap-2 items-start">
       <div className="col-span-4">
         <Select
           value={ing.inventoryItemId || "_manual"}
@@ -116,6 +130,19 @@ const IngredientRow: React.FC<IngredientRowProps> = ({ ing, index, onChange, onR
           <X className="h-3.5 w-3.5 text-destructive" />
         </Button>
       </div>
+    </div>
+    {unitMismatch && (
+      <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+        <AlertTriangle className="h-3 w-3" />
+        Unit differs from this item's usage unit — fix it or variance will flag it as a setup error (no auto-conversion).
+      </p>
+    )}
+    {missingItemUnit && (
+      <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+        <AlertTriangle className="h-3 w-3" />
+        This item has no canonical usage unit set — set one on the item so variance can price it.
+      </p>
+    )}
     </div>
   );
 };
