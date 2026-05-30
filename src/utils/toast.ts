@@ -1,5 +1,4 @@
 import { toast } from "sonner";
-import { escapeHtml } from "./htmlSanitizer"; // Import the new escapeHtml utility
 
 let consecutiveErrorCount = 0;
 const ERROR_THRESHOLD = 10; // Number of consecutive errors before showing a summary
@@ -33,9 +32,9 @@ const showToast = (type: 'success' | 'error' | 'info' | 'warning', message: stri
   activeToastIds.forEach(id => toast.dismiss(id));
   activeToastIds.clear();
 
-  // HTML-escape the message before displaying it
-  const safeMessage = escapeHtml(message);
-  const truncatedMessage = truncateMessage(safeMessage);
+  // Sonner renders the message as text (React escapes it), so no manual HTML
+  // escaping is needed — escaping here would surface entities like &quot; to users.
+  const truncatedMessage = truncateMessage(message);
 
   const id = toast[type](truncatedMessage, {
     ...options,
