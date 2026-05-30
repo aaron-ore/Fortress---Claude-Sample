@@ -106,6 +106,9 @@ const Auth: React.FC = () => {
     setLoading(false);
   };
 
+  // Google sign-in is hidden until release. Set to true to re-enable the button.
+  const showGoogleSignIn = false;
+
   const handleGoogleSignIn = async () => {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -249,30 +252,35 @@ const Auth: React.FC = () => {
               {loading ? "Loading..." : (isLogin ? "Sign In" : "Sign Up")}
             </Button>
           </form>
-          <div className="relative mt-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-white/30" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-black/20 px-2 text-white/80">
-                Or
-              </span>
-            </div>
-          </div>
+          {/* "Or" divider + Google sign-in hidden until release (see showGoogleSignIn) */}
+          {showGoogleSignIn && (
+            <>
+              <div className="relative mt-6">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-white/30" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-black/20 px-2 text-white/80">
+                    Or
+                  </span>
+                </div>
+              </div>
+              <Button
+                onClick={handleGoogleSignIn}
+                className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
+                disabled={loading}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M17.64 9.2045C17.64 8.5645 17.58 7.9545 17.47 7.3845H9.00V10.8245H13.87C13.66 11.9845 13.01 12.9945 12.00 13.6645V16.0145H15.18C17.07 14.2945 18.12 11.7045 17.64 9.2045Z" fill="#4285F4"/>
+                  <path d="M9.00 18.0005C11.43 18.0005 13.46 17.2205 15.18 16.0105L12.00 13.6605C11.15 14.2305 10.13 14.5905 9.00 14.5905C6.81 14.5905 4.99 13.1405 4.34 11.1805H1.09V13.8305C1.76 15.1605 2.86 16.2705 4.24 17.0005C5.62 17.7305 7.25 18.0005 9.00 18.0005Z" fill="#34A853"/>
+                  <path d="M4.34 11.1805C4.19 10.7405 4.11 10.2705 4.11 9.8105C4.11 9.3505 4.19 8.8805 4.34 8.4405V5.7905H1.09C0.54 6.8605 0.25 8.0905 0.25 9.3105C0.25 10.5305 0.54 11.7605 1.09 12.8305L4.34 11.1805Z" fill="#FBBC05"/>
+                  <path d="M9.00 5.4105C10.17 5.4105 11.22 5.8105 12.09 6.5405L15.25 3.3805C13.46 1.6605 11.43 0.8805 9.00 0.8805C7.25 0.8805 5.62 1.1505 4.24 1.8805C2.86 2.6105 1.76 3.7205 1.09 5.0505L4.34 7.7005C4.99 5.7405 6.81 4.3005 9.00 4.3005V5.4105Z" fill="#EA4335"/>
+                </svg>
+                Sign {isLogin ? "In" : "Up"} with Google
+              </Button>
+            </>
+          )}
           <div className="mt-6 space-y-4">
-            <Button
-              onClick={handleGoogleSignIn}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
-              disabled={loading}
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17.64 9.2045C17.64 8.5645 17.58 7.9545 17.47 7.3845H9.00V10.8245H13.87C13.66 11.9845 13.01 12.9945 12.00 13.6645V16.0145H15.18C17.07 14.2945 18.12 11.7045 17.64 9.2045Z" fill="#4285F4"/>
-                <path d="M9.00 18.0005C11.43 18.0005 13.46 17.2205 15.18 16.0105L12.00 13.6605C11.15 14.2305 10.13 14.5905 9.00 14.5905C6.81 14.5905 4.99 13.1405 4.34 11.1805H1.09V13.8305C1.76 15.1605 2.86 16.2705 4.24 17.0005C5.62 17.7305 7.25 18.0005 9.00 18.0005Z" fill="#34A853"/>
-                <path d="M4.34 11.1805C4.19 10.7405 4.11 10.2705 4.11 9.8105C4.11 9.3505 4.19 8.8805 4.34 8.4405V5.7905H1.09C0.54 6.8605 0.25 8.0905 0.25 9.3105C0.25 10.5305 0.54 11.7605 1.09 12.8305L4.34 11.1805Z" fill="#FBBC05"/>
-                <path d="M9.00 5.4105C10.17 5.4105 11.22 5.8105 12.09 6.5405L15.25 3.3805C13.46 1.6605 11.43 0.8805 9.00 0.8805C7.25 0.8805 5.62 1.1505 4.24 1.8805C2.86 2.6105 1.76 3.7205 1.09 5.0505L4.34 7.7005C4.99 5.7405 6.81 4.3005 9.00 4.3005V5.4105Z" fill="#EA4335"/>
-              </svg>
-              Sign {isLogin ? "In" : "Up"} with Google
-            </Button>
             <div className="text-center text-sm">
               {isLogin ? (
                 <>
