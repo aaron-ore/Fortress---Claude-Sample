@@ -17,7 +17,6 @@ import {
   Plug,
   Zap,
   Activity,
-  FileText, // Added FileText icon for policy documents
   Upload, // NEW: Import Upload icon
   Utensils, // NEW: Import Utensils icon
   Wrench, // Changed from Tool to Wrench icon for Advanced Tools
@@ -39,17 +38,6 @@ export interface NavItem {
 export const mainNavItems: NavItem[] = [
   { title: "Dashboard", href: "/home", icon: LayoutDashboard },
   {
-    title: "Inventory",
-    href: "/inventory",
-    icon: Package,
-    isParent: true,
-    children: [
-      { title: "All Items", href: "/inventory", icon: Package },
-      { title: "Locations", href: "/folders", icon: MapPin },
-      { title: "Recipes (BOM)", href: "/recipes", icon: Utensils, tag: "NEW" }, // NEW: Recipes link
-    ],
-  },
-  {
     title: "Food Cost Variance",
     href: "/variance",
     icon: TrendingDown,
@@ -62,16 +50,27 @@ export const mainNavItems: NavItem[] = [
       { title: "Physical Counts", href: "/variance/counts", icon: Package },
     ],
   },
+  {
+    title: "Inventory",
+    href: "/inventory",
+    icon: Package,
+    isParent: true,
+    children: [
+      { title: "All Items", href: "/inventory", icon: Package },
+      { title: "Recipes (BOM)", href: "/recipes", icon: Utensils },
+      { title: "Locations", href: "/folders", icon: MapPin },
+    ],
+  },
   { title: "Orders", href: "/orders", icon: Receipt },
-  { title: "Customers", href: "/customers", icon: User },
   { title: "Vendors", href: "/vendors", icon: Truck },
   { title: "Reports", href: "/reports", icon: BarChart },
   {
-    title: "Advanced Tools", // NEW Parent Item
+    title: "Advanced Tools",
     href: "/advanced-tools",
-    icon: Wrench, // Using Wrench icon
+    icon: Wrench,
     isParent: true,
     children: [
+      { title: "Customers", href: "/customers", icon: User },
       { title: "Integrations", href: "/integrations", icon: Plug },
       { title: "Automation", href: "/automation", icon: Zap, adminOnly: true },
       { title: "Warehouse Operations", href: "/warehouse-operations", icon: Warehouse },
@@ -101,7 +100,4 @@ export const supportAndResourcesNavItems: NavItem[] = [
   { title: "Help Center", href: "/help", icon: HelpCircle },
   { title: "What's New?", href: "/whats-new", icon: Sparkles },
   { title: "Setup Instructions", href: "/setup-instructions", icon: BookOpen },
-  { title: "Terms of Service", href: "/terms-of-service", icon: FileText }, // NEW: Added Terms of Service
-  { title: "Privacy Policy", href: "/privacy-policy", icon: FileText },   // NEW: Added Privacy Policy
-  { title: "Refund Policy", href: "/refund-policy", icon: FileText },     // NEW: Added Refund Policy
 ];
