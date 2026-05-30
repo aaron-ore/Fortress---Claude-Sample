@@ -9,8 +9,8 @@ const BackButton: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Don't show back button on the root dashboard page
-  if (location.pathname === '/') {
+  // Don't show the back button on the dashboard / home page
+  if (location.pathname === '/' || location.pathname === '/home') {
     return null;
   }
 
