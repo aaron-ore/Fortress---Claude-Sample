@@ -33,6 +33,13 @@ const PeriodPicker: React.FC<PeriodPickerProps> = ({ value, onChange, canManage 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  const isDirty = !!(name.trim() || locationId || startDate || endDate);
+  const attemptClose = () => {
+    if (saving) return;
+    if (isDirty && !window.confirm("Discard this period? Your unsaved changes will be lost.")) return;
+    setOpen(false);
+  };
+
   const handleCreate = async () => {
     if (!name.trim()) return showError("Period name is required.");
     if (!locationId) return showError("Select a restaurant location.");
@@ -74,8 +81,8 @@ const PeriodPicker: React.FC<PeriodPickerProps> = ({ value, onChange, canManage 
         </Button>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+      <Dialog open={open} onOpenChange={(o) => { if (!o) attemptClose(); }}>
+        <DialogContent onInteractOutside={(e) => { if (isDirty) { e.preventDefault(); attemptClose(); } }}>
           <DialogHeader>
             <DialogTitle>New variance period</DialogTitle>
             <DialogDescription>A location and date range that scopes sales, counts, and purchases.</DialogDescription>
@@ -114,7 +121,7 @@ const PeriodPicker: React.FC<PeriodPickerProps> = ({ value, onChange, canManage 
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={attemptClose}>Cancel</Button>
             <Button onClick={handleCreate} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Create period
             </Button>

@@ -40,6 +40,13 @@ const AddUnitDialog: React.FC<AddUnitDialogProps> = ({ open, onClose, onCreated,
     }
   }, [open, defaultName]);
 
+  const isDirty = !!(name.trim() || abbreviation.trim());
+  const attemptClose = () => {
+    if (saving) return;
+    if (isDirty && !window.confirm("Discard this unit? Your unsaved changes will be lost.")) return;
+    onClose();
+  };
+
   const handleSave = async () => {
     if (!name.trim()) return showError("Unit name is required.");
     if (!abbreviation.trim()) return showError("Abbreviation is required.");
@@ -53,8 +60,11 @@ const AddUnitDialog: React.FC<AddUnitDialogProps> = ({ open, onClose, onCreated,
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-[420px]">
+    <Dialog open={open} onOpenChange={(o) => { if (!o) attemptClose(); }}>
+      <DialogContent
+        className="sm:max-w-[420px]"
+        onInteractOutside={(e) => { if (isDirty) { e.preventDefault(); attemptClose(); } }}
+      >
         <DialogHeader>
           <DialogTitle>New unit of measure</DialogTitle>
           <DialogDescription>Add a unit (e.g. Kilogram / kg) for your organization.</DialogDescription>
@@ -85,7 +95,7 @@ const AddUnitDialog: React.FC<AddUnitDialogProps> = ({ open, onClose, onCreated,
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={attemptClose}>Cancel</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Add unit

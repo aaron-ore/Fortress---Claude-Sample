@@ -357,9 +357,26 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     isAddingItem || // NEW: Disable if item is already being added
     !canManageInventory; // NEW: Disable if user cannot manage inventory
 
+  // Guard against losing work when clicking outside / pressing Esc / hitting Cancel.
+  const isDirty = !!(
+    itemName.trim() || description.trim() || sku.trim() || category ||
+    unitCost || retailPrice || usageUnitId || imageFile ||
+    simpleQuantity !== "0" || pickingBinQuantity !== "0" || overstockQuantity !== "0" ||
+    autoReorderEnabled
+  );
+
+  const attemptClose = () => {
+    if (isAddingItem || isUploadingImage) return; // never close mid-save
+    if (isDirty && !window.confirm("Discard this item? Your unsaved changes will be lost.")) return;
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={(o) => { if (!o) attemptClose(); }}>
+      <DialogContent
+        className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto"
+        onInteractOutside={(e) => { if (isDirty) { e.preventDefault(); attemptClose(); } }}
+      >
         <DialogHeader>
           <DialogTitle>Add New Inventory Item</DialogTitle>
           <DialogDescription>
@@ -736,7 +753,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isAddingItem}>
+          <Button variant="outline" onClick={attemptClose} disabled={isAddingItem}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isFormInvalid}>
