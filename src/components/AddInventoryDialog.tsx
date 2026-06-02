@@ -469,6 +469,34 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
               onCreated={(u) => setUsageUnitId(u.id)}
             />
           </div>
+          {viewMode === "simple" && (
+            <div className="space-y-2">
+              <Label htmlFor="simpleLocation">Location <span className="text-red-500">*</span></Label>
+              <Select
+                value={selectedMainFolderId}
+                onValueChange={setSelectedMainFolderId}
+                disabled={!canManageInventory || inventoryFolders.length === 0}
+              >
+                <SelectTrigger id="simpleLocation">
+                  <SelectValue placeholder="Select a location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {inventoryFolders.length > 0 ? (
+                    inventoryFolders.map((folder) => (
+                      <SelectItem key={folder.id} value={folder.id}>
+                        {folder.name}{folder.locationType === "restaurant" ? " (Restaurant)" : ""}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-folders" disabled>No locations set up.</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Choose where this item lives. Restaurant locations don't require a SKU.
+              </p>
+            </div>
+          )}
           {viewMode === "simple" ? (
             <div className="space-y-2">
               <Label htmlFor="simpleQuantity">Quantity <span className="text-red-500">*</span></Label>
