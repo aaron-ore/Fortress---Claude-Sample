@@ -80,6 +80,16 @@ DO $$ BEGIN
     ALTER TABLE public.recipes ADD CONSTRAINT recipes_org_name_key UNIQUE (organization_id, name);
   END IF;
 END $$;
+-- Legacy app-builder column: recipes.yield_quantity was NOT NULL with no default,
+-- but the app writes output_quantity instead, so inserts failed with a null
+-- violation. Relax it (it's a dead duplicate of output_quantity).
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema='public' AND table_name='recipes' AND column_name='yield_quantity') THEN
+    ALTER TABLE public.recipes ALTER COLUMN yield_quantity DROP NOT NULL;
+    ALTER TABLE public.recipes ALTER COLUMN yield_quantity SET DEFAULT 1;
+  END IF;
+END $$;
 ALTER TABLE public.recipes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can view recipes in their organization" ON public.recipes;
 CREATE POLICY "Users can view recipes in their organization" ON public.recipes
