@@ -268,9 +268,26 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ open, onClose, initialRecipe })
     onClose();
   };
 
+  // Guard against losing work when clicking outside / pressing Esc / hitting Cancel.
+  const isDirty = !!(
+    name.trim() || description.trim() || category.trim() || notes.trim() ||
+    servingSize.trim() || prepTime || cookTime || locationId || outputUnitId ||
+    outputQty !== "1" ||
+    ingredients.some((i) => i.ingredientName.trim() || i.quantity || i.inventoryItemId)
+  );
+
+  const attemptClose = () => {
+    if (isSaving) return; // never close mid-save
+    if (isDirty && !window.confirm("Discard this recipe? Your unsaved changes will be lost.")) return;
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(o) => { if (!o) attemptClose(); }}>
+      <DialogContent
+        className="sm:max-w-[720px] max-h-[90vh] overflow-y-auto"
+        onInteractOutside={(e) => { if (isDirty) { e.preventDefault(); attemptClose(); } }}
+      >
         <DialogHeader>
           <DialogTitle>{initialRecipe ? "Edit Recipe" : "New Recipe / BOM"}</DialogTitle>
           <DialogDescription>
@@ -406,7 +423,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ open, onClose, initialRecipe })
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={attemptClose}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={isSaving}>
             {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {initialRecipe ? "Save Changes" : "Create Recipe"}
