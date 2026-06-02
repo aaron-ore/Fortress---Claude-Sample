@@ -18,6 +18,8 @@ import { useInventory } from "@/context/InventoryContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useCategories } from "@/context/CategoryContext";
 import { useVendors } from "@/context/VendorContext";
+import { useUnitOfMeasure } from "@/context/UnitOfMeasureContext";
+import AddUnitDialog from "@/components/units/AddUnitDialog";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
 import { supabase } from "@/lib/supabaseClient";
 import { useProfile } from "@/context/ProfileContext";
@@ -43,6 +45,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const { inventoryFolders } = useOnboarding(); // Updated to inventoryFolders
   const { categories } = useCategories();
   const { vendors } = useVendors();
+  const { units } = useUnitOfMeasure();
   const { profile } = useProfile(); // NEW: Get profile for role checks
 
   // NEW: Role-based permissions
@@ -61,7 +64,9 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const [pickingReorderLevel, setPickingReorderLevel] = useState("0"); // Changed from ""
   const [unitCost, setUnitCost] = useState("");
   const [retailPrice, setRetailPrice] = useState("");
-  
+  const [usageUnitId, setUsageUnitId] = useState("");
+  const [addUnitOpen, setAddUnitOpen] = useState(false);
+
   const [selectedMainFolderId, setSelectedMainFolderId] = useState("");
   const [selectedPickingBinFolderId, setSelectedPickingBinFolderId] = useState("");
 
@@ -89,6 +94,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       setPickingReorderLevel("0"); // Changed from ""
       setUnitCost("");
       setRetailPrice("");
+      setUsageUnitId("");
       // NEW: Set initial folder based on prop or first available
       setSelectedMainFolderId(initialFolderId || (inventoryFolders.length > 0 ? inventoryFolders[0].id : "no-folders"));
       setSelectedPickingBinFolderId(initialFolderId || (inventoryFolders.length > 0 ? inventoryFolders[0].id : "no-folders"));
@@ -293,6 +299,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       description: description.trim(),
       sku: finalSku,
       category: category.trim(),
+      usageUnitId: usageUnitId || undefined,
       pickingBinQuantity: finalPickingBinQuantity,
       overstockQuantity: finalOverstockQuantity,
       reorderLevel: finalReorderLevel,
@@ -432,6 +439,35 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
                 )}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="usageUnit">
+              Usage Unit {isRestaurant && <span className="text-xs text-muted-foreground">(used by recipes & variance)</span>}
+            </Label>
+            <Select
+              value={usageUnitId || "_none"}
+              onValueChange={(v) => {
+                if (v === "_new") { setAddUnitOpen(true); return; }
+                setUsageUnitId(v === "_none" ? "" : v);
+              }}
+              disabled={!canManageInventory}
+            >
+              <SelectTrigger id="usageUnit">
+                <SelectValue placeholder="Select a unit" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_none">No unit</SelectItem>
+                {units.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>{u.name} ({u.abbreviation})</SelectItem>
+                ))}
+                <SelectItem value="_new" className="text-primary font-medium">+ New unit…</SelectItem>
+              </SelectContent>
+            </Select>
+            <AddUnitDialog
+              open={addUnitOpen}
+              onClose={() => setAddUnitOpen(false)}
+              onCreated={(u) => setUsageUnitId(u.id)}
+            />
           </div>
           {viewMode === "simple" ? (
             <div className="space-y-2">
