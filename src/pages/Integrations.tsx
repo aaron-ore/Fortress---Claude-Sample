@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plug, CheckCircle, RefreshCw, Loader2, MapPin, Link as LinkIcon, Trash2, Edit, Hourglass, ExternalLink } from "lucide-react";
 import { useProfile } from "@/context/ProfileContext";
-import { showError, showSuccess, showInfo } from "@/utils/toast"; // Added showInfo
+import { showError, showSuccess } from "@/utils/toast";
 import { supabase, supabaseFunctionsUrl } from "@/lib/supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "next-themes";
@@ -121,7 +121,6 @@ const Integrations: React.FC = () => {
     const quickbooksError = params.get('quickbooks_error');
     const shopifySuccess = params.get('shopify_success');
     const shopifyError = params.get('shopify_error');
-    const lemonSqueezyCheckoutStatus = params.get('lemon_squeezy_checkout_status');
 
     if ((quickbooksSuccess || quickbooksError) && !qbCallbackProcessedRef.current) {
       if (quickbooksSuccess) {
@@ -141,21 +140,6 @@ const Integrations: React.FC = () => {
       }
       shopifyCallbackProcessedRef.current = true;
       navigate(location.pathname, { replace: true });
-    }
-
-    if (lemonSqueezyCheckoutStatus) {
-      if (lemonSqueezyCheckoutStatus === 'completed') {
-        showSuccess("Lemon Squeezy checkout completed!");
-      } else if (lemonSqueezyCheckoutStatus === 'cancelled') {
-        showError("Lemon Squeezy checkout cancelled.");
-      } else {
-        showInfo(`Lemon Squeezy checkout status: ${lemonSqueezyCheckoutStatus}`);
-      }
-      const newSearchParams = new URLSearchParams(params);
-      newSearchParams.delete('lemon_squeezy_checkout_status');
-      newSearchParams.delete('organization_id');
-      newSearchParams.delete('user_id');
-      navigate({ search: newSearchParams.toString() }, { replace: true });
     }
   }, [location.search, location.pathname, navigate]);
 

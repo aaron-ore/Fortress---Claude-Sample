@@ -21,6 +21,7 @@ import {
   Utensils, // NEW: Import Utensils icon
   Wrench, // Changed from Tool to Wrench icon for Advanced Tools
   TrendingDown, // Variance Finder
+  Ruler, // Units of measure
 } from "lucide-react";
 
 export interface NavItem {
@@ -59,6 +60,7 @@ export const mainNavItems: NavItem[] = [
     children: [
       { title: "All Items", href: "/inventory", icon: Package },
       { title: "Recipes (BOM)", href: "/recipes", icon: Utensils },
+      { title: "Units of Measure", href: "/units", icon: Ruler },
       { title: "Locations", href: "/folders", icon: MapPin },
     ],
   },

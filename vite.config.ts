@@ -23,12 +23,8 @@ export default defineConfig(({ mode }) => {
     define: { // Explicitly define environment variables to ensure they are injected into the client-side bundle
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
       'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
-      // RENAMED Dodo variables to Lemon Squeezy variables
-      'import.meta.env.VITE_LEMON_SQUEEZY_PRODUCT_ID_STANDARD': JSON.stringify(env.LEMON_SQUEEZY_PRODUCT_ID_STANDARD),
-      'import.meta.env.VITE_LEMON_SQUEEZY_PRODUCT_ID_PRO': JSON.stringify(env.LEMON_SQUEEZY_PRODUCT_ID_PRO),
-      'import.meta.env.VITE_LEMON_SQUEEZY_PRODUCT_ID_STANDARD_VARIANT': JSON.stringify(env.LEMON_SQUEEZY_PRODUCT_ID_STANDARD_VARIANT),
-      'import.meta.env.VITE_LEMON_SQUEEZY_PRODUCT_ID_PRO_VARIANT': JSON.stringify(env.LEMON_SQUEEZY_PRODUCT_ID_PRO_VARIANT),
-      'import.meta.env.VITE_LEMON_SQUEEZY_STORE_URL': JSON.stringify(env.LEMON_SQUEEZY_STORE_URL),
+      // Dodo Payments runs server-side (Supabase Edge Functions); no client-side
+      // Dodo keys or product ids are needed here.
       // Add any other VITE_ prefixed env vars you need to expose to the client here
     },
     build: {
