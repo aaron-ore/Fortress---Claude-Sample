@@ -95,6 +95,7 @@ const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
 const RefundPolicy = lazyWithRetry(() => import("./pages/RefundPolicy"));
 // Customer Import hidden (legacy B2B stub, out of scope for the variance pivot)
 const Recipes = lazyWithRetry(() => import("./pages/Recipes")); // NEW: Lazy import for Recipes
+const UnitsOfMeasure = lazyWithRetry(() => import("./pages/UnitsOfMeasure"));
 const VarianceSalesImport = lazyWithRetry(() => import("./pages/variance/VarianceSalesImport")); // Variance Finder
 const VariancePosMapping = lazyWithRetry(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
 const VarianceCounts = lazyWithRetry(() => import("./pages/variance/VarianceCounts")); // Variance Finder
@@ -162,6 +163,7 @@ const AuthenticatedApp = () => {
                                   <Route path="integrations" element={<Integrations />} />
                                   <Route path="automation" element={<Automation />} />
                                   <Route path="recipes" element={<Recipes />} /> {/* NEW: Route for Recipes */}
+                                  <Route path="units" element={<UnitsOfMeasure />} /> {/* Units of measure management */}
                                   <Route path="variance/sales-import" element={<VarianceSalesImport />} /> {/* Variance Finder */}
                                   <Route path="variance/mapping" element={<VariancePosMapping />} /> {/* Variance Finder */}
                                   <Route path="variance/counts" element={<VarianceCounts />} /> {/* Variance Finder */}
@@ -202,7 +204,7 @@ const AppContent = () => {
 
   const qbCallbackProcessedRef = useRef(false);
   const shopifyCallbackProcessedRef = useRef(false);
-  const lemonSqueezyCallbackProcessedRef = useRef(false);
+  const dodoCallbackProcessedRef = useRef(false);
 
   const [isUpgradePromptDialogOpen, setIsUpgradePromptDialogOpen] = useState(false);
 
@@ -221,7 +223,7 @@ const AppContent = () => {
     const quickbooksError = params.get('quickbooks_error');
     const shopifySuccess = params.get('shopify_success');
     const shopifyError = params.get('shopify_error');
-    const lemonSqueezyCheckoutStatus = params.get('lemon_squeezy_checkout_status');
+    const dodoCheckoutStatus = params.get('dodo_status');
 
     if (quickbooksSuccess && !qbCallbackProcessedRef.current) {
       showSuccess("QuickBooks connected!");
@@ -247,23 +249,23 @@ const AppContent = () => {
       return; // Exit after navigation
     }
 
-    if (lemonSqueezyCheckoutStatus && !lemonSqueezyCallbackProcessedRef.current) {
-      if (lemonSqueezyCheckoutStatus === 'completed') {
-        showSuccess("Subscription checkout completed! Refreshing profile...");
-      } else if (lemonSqueezyCheckoutStatus === 'cancelled') {
-        showError("Subscription checkout cancelled.");
+    if (dodoCheckoutStatus && !dodoCallbackProcessedRef.current) {
+      if (dodoCheckoutStatus === 'success') {
+        showSuccess("Payment received! Activating your plan…");
+      } else if (dodoCheckoutStatus === 'cancelled') {
+        showError("Checkout cancelled.");
       } else {
-        showInfo(`Subscription checkout status: ${lemonSqueezyCheckoutStatus}`);
+        showInfo(`Checkout status: ${dodoCheckoutStatus}`);
       }
-      // Trigger profile fetch to update plan status
-      fetchProfile(); 
-      
+      // The Dodo webhook is the source of truth; refetch to pick up the new plan.
+      // Retry shortly after in case the webhook lands a moment after redirect.
+      fetchProfile();
+      setTimeout(() => { fetchProfile(); }, 4000);
+
       const newSearchParams = new URLSearchParams(params);
-      newSearchParams.delete('lemon_squeezy_checkout_status');
-      newSearchParams.delete('organization_id');
-      newSearchParams.delete('user_id');
+      newSearchParams.delete('dodo_status');
       navigate({ search: newSearchParams.toString() }, { replace: true });
-      lemonSqueezyCallbackProcessedRef.current = true; // Mark as processed
+      dodoCallbackProcessedRef.current = true; // Mark as processed
       return; // Exit after navigation
     }
 
@@ -312,7 +314,7 @@ const AppContent = () => {
     }
   }, [
     location.hash, location.search, location.pathname, navigate,
-    qbCallbackProcessedRef, shopifyCallbackProcessedRef, lemonSqueezyCallbackProcessedRef,
+    qbCallbackProcessedRef, shopifyCallbackProcessedRef, dodoCallbackProcessedRef,
     isLoadingAuth, user, isLoadingProfile, profile, isUpgradePromptDialogOpen, fetchProfile,
   ]);
 

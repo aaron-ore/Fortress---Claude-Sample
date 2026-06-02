@@ -26,6 +26,7 @@ export interface CompanyProfile {
   perpetualFeatures?: string[];
   perpetualLicenseVersion?: string;
   industry?: string; // NEW
+  subscriptionStatus?: string; // Dodo subscription lifecycle status
 }
 
 export interface UserProfile {
@@ -41,8 +42,8 @@ export interface UserProfile {
   quickbooksAccessToken?: string;
   quickbooksRefreshToken?: string;
   quickbooksRealmId?: string;
-  lemonSqueezyCustomerId?: string; // RENAMED from dodoCustomerId
-  lemonSqueezySubscriptionId?: string; // RENAMED from dodoSubscriptionId
+  dodoCustomerId?: string;
+  dodoSubscriptionId?: string;
   companyProfile?: CompanyProfile;
   hasOnboardingWizardCompleted: boolean;
   hasSeenUpgradePrompt: boolean;
@@ -55,7 +56,7 @@ interface ProfileContextType {
   isLoadingAllProfiles: boolean;
   fetchProfile: () => Promise<void>;
   fetchAllProfiles: () => Promise<void>;
-  updateProfile: (updates: Partial<Omit<UserProfile, 'id' | 'email' | 'role' | 'organizationId' | 'createdAt' | 'quickbooksAccessToken' | 'quickbooksRefreshToken' | 'quickbooksRealmId' | 'lemonSqueezyCustomerId' | 'lemonSqueezySubscriptionId' | 'hasOnboardingWizardCompleted' | 'hasSeenUpgradePrompt'>>) => Promise<void>;
+  updateProfile: (updates: Partial<Omit<UserProfile, 'id' | 'email' | 'role' | 'organizationId' | 'createdAt' | 'quickbooksAccessToken' | 'quickbooksRefreshToken' | 'quickbooksRealmId' | 'dodoCustomerId' | 'dodoSubscriptionId' | 'hasOnboardingWizardCompleted' | 'hasSeenUpgradePrompt'>>) => Promise<void>;
   updateUserRole: (userId: string, newRole: string, organizationId: string) => Promise<void>;
   updateCompanyProfile: (updates: Partial<CompanyProfile>, uniqueCode?: string) => Promise<void>;
   updateOrganizationTheme: (newTheme: string) => Promise<void>;
@@ -103,6 +104,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
       perpetualFeatures: companyData.perpetual_features || undefined,
       perpetualLicenseVersion: companyData.perpetual_license_version || undefined,
       industry: companyData.industry || undefined, // NEW
+      subscriptionStatus: companyData.subscription_status || undefined,
     } : undefined;
     
     const userProfile: UserProfile = {
@@ -118,8 +120,8 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
       quickbooksAccessToken: data.quickbooks_access_token || undefined,
       quickbooksRefreshToken: data.quickbooks_refresh_token || undefined,
       quickbooksRealmId: data.quickbooks_realm_id || undefined,
-      lemonSqueezyCustomerId: companyData?.lemon_squeezy_customer_id || undefined, // RENAMED from dodoCustomerId
-      lemonSqueezySubscriptionId: companyData?.lemon_squeezy_subscription_id || undefined, // RENAMED from dodoSubscriptionId
+      dodoCustomerId: companyData?.dodo_customer_id || undefined,
+      dodoSubscriptionId: companyData?.dodo_subscription_id || undefined,
       companyProfile: companyProfile,
       hasOnboardingWizardCompleted: data.has_onboarding_wizard_completed ?? false,
       hasSeenUpgradePrompt: data.has_seen_upgrade_prompt ?? false,
@@ -140,7 +142,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsLoadingProfile(true);
     const { data, error } = await supabase
       .from('profiles')
-      .select('*, organizations(name,currency,address,unique_code,default_theme,company_logo_url,shopify_access_token,shopify_refresh_token,shopify_store_name,plan,default_reorder_level,enable_auto_reorder_notifications,enable_auto_reorder,perpetual_features,perpetual_license_version,lemon_squeezy_customer_id,lemon_squeezy_subscription_id,industry)') // MODIFIED: Added industry
+      .select('*, organizations(name,currency,address,unique_code,default_theme,company_logo_url,shopify_access_token,shopify_refresh_token,shopify_store_name,plan,default_reorder_level,enable_auto_reorder_notifications,enable_auto_reorder,perpetual_features,perpetual_license_version,dodo_customer_id,dodo_subscription_id,subscription_status,industry)') // MODIFIED: Dodo billing fields
       .eq('id', user.id)
       .single();
 
@@ -245,7 +247,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   }, []);
 
-  const updateProfile = async (updates: Partial<Omit<UserProfile, 'id' | 'email' | 'role' | 'organizationId' | 'createdAt' | 'quickbooksAccessToken' | 'quickbooksRefreshToken' | 'quickbooksRealmId' | 'lemonSqueezyCustomerId' | 'lemonSqueezySubscriptionId' | 'hasOnboardingWizardCompleted' | 'hasSeenUpgradePrompt'>>) => {
+  const updateProfile = async (updates: Partial<Omit<UserProfile, 'id' | 'email' | 'role' | 'organizationId' | 'createdAt' | 'quickbooksAccessToken' | 'quickbooksRefreshToken' | 'quickbooksRealmId' | 'dodoCustomerId' | 'dodoSubscriptionId' | 'hasOnboardingWizardCompleted' | 'hasSeenUpgradePrompt'>>) => {
     if (!profile) {
       const errorMessage = 'User profile not loaded.';
       await logActivity("Update User Profile Failed", errorMessage, profile, { updated_fields: updates }, true);

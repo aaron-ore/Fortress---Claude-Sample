@@ -8,6 +8,7 @@ import React, { useState, useEffect } from "react";
     import { cn } from "@/lib/utils";
     import { Badge } from "@/components/ui/badge";
     import { useProfile } from "@/context/ProfileContext";
+    import { supabase } from "@/lib/supabaseClient";
     import { ALL_APP_FEATURES, getAllFeatureIds } from "@/lib/features";
 
     interface PlanFeature {
@@ -24,8 +25,6 @@ import React, { useState, useEffect } from "react";
       oneTimePrice?: number;
       isPopular?: boolean;
       features: PlanFeature[];
-      dodoProductId?: string;
-      dodoVariantId?: string;
     }
 
     const BillingSubscriptions: React.FC = () => {
@@ -63,8 +62,6 @@ import React, { useState, useEffect } from "react";
                 text: appFeature.name,
                 included: ['core_inventory_management', 'dashboard_overview', 'basic_order_management', 'user_profile_management', 'basic_reports', 'mobile_responsive_ui', 'in_app_notifications', 'email_notifications', 'customer_management', 'vendor_management', 'folder_management', 'qr_code_generation', 'csv_import_export', 'order_kanban_board', 'pdf_export_orders', 'warehouse_operations_dashboard', 'warehouse_tool_item_lookup', 'warehouse_tool_receive_inventory', 'warehouse_tool_putaway', 'warehouse_tool_fulfill_order', 'warehouse_tool_ship_order', 'warehouse_tool_stock_transfer', 'warehouse_tool_cycle_count', 'warehouse_tool_issue_report', 'terms_of_service', 'privacy_policy', 'refund_policy'].includes(appFeature.id),
               })),
-              dodoProductId: import.meta.env.VITE_DODO_PRODUCT_ID_STANDARD || 'prod_standard_mock',
-              dodoVariantId: import.meta.env.VITE_DODO_PRODUCT_ID_STANDARD_VARIANT || 'standard_monthly_mock',
             },
             {
               id: "pro",
@@ -77,8 +74,6 @@ import React, { useState, useEffect } from "react";
                 text: appFeature.name,
                 included: getAllFeatureIds().includes(appFeature.id), // Pro includes all current features
               })),
-              dodoProductId: import.meta.env.VITE_DODO_PRODUCT_ID_PRO || 'prod_pro_mock',
-              dodoVariantId: import.meta.env.VITE_DODO_PRODUCT_ID_PRO_VARIANT || 'pro_monthly_mock',
             },
             {
               id: "enterprise",
@@ -129,57 +124,52 @@ import React, { useState, useEffect } from "react";
           return;
         }
 
-        if (!plan.dodoProductId || !plan.dodoVariantId) {
-          showError("Dodo product information missing for this plan.");
-          return;
-        }
-
         setIsProcessingSubscription(true);
         try {
-          const lemonSqueezyStoreUrl = import.meta.env.VITE_LEMON_SQUEEZY_STORE_URL;
-          if (!lemonSqueezyStoreUrl) {
-            throw new Error("Lemon Squeezy Store URL is not configured. Please contact support.");
-          }
+          const returnUrl = `${window.location.origin}/billing?dodo_status=success`;
 
-          const redirectUrl = encodeURIComponent(`${window.location.origin}/billing?lemon_squeezy_checkout_status={checkout_status}&organization_id=${profile.organizationId}&user_id=${profile.id}`);
-          const passthroughData = encodeURIComponent(JSON.stringify({
-            organization_id: profile.organizationId,
-            user_id: profile.id,
-            plan_id: plan.id, // Pass the plan ID for webhook processing
-          }));
+          const { data, error } = await supabase.functions.invoke('create-dodo-checkout', {
+            body: JSON.stringify({
+              planId: plan.id,
+              billingCycle,
+              returnUrl,
+            }),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            },
+          });
 
-          // NOTE: Using Dodo product/variant IDs here, assuming they map to Lemon Squeezy checkout links
-          const checkoutUrl = `https://${lemonSqueezyStoreUrl}/checkout/buy/${plan.dodoProductId}?variant=${plan.dodoVariantId}&passthrough=${passthroughData}&redirect_url=${redirectUrl}`;
-          
-          window.location.href = checkoutUrl; // Redirect to Lemon Squeezy checkout page
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+          if (!data?.checkout_url) throw new Error("No checkout URL returned. Please try again.");
 
+          // Hand off to Dodo's hosted checkout. On success Dodo redirects back to returnUrl,
+          // and the dodo-webhook function locks in the plan server-side.
+          window.location.href = data.checkout_url;
         } catch (error: any) {
-          console.error("Error initiating Lemon Squeezy checkout:", error);
-          showError(`Failed to initiate checkout: ${error.message}`);
-        } finally {
+          console.error("Error initiating Dodo checkout:", error);
+          showError(`Failed to start checkout: ${error.message}`);
           setIsProcessingSubscription(false);
         }
       };
 
       const handleManageSubscription = async () => {
-        // FIX: Corrected property access from dodoSubscriptionId to lemonSqueezySubscriptionId
-        if (!profile?.organizationId || !profile?.lemonSqueezySubscriptionId) { 
+        if (!profile?.organizationId || !profile?.dodoSubscriptionId) {
           showError("You don't have an active subscription to manage.");
           return;
         }
 
         setIsManagingSubscription(true);
         try {
-          // In a real Lemon Squeezy integration, you would generate a link to the customer portal
-          showInfo("Redirecting to subscription management portal (simulated)...");
-          await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call delay
-          showSuccess("Redirected to simulated subscription management.");
+          // Refresh entitlement state from the server (updated by the Dodo webhook).
+          await fetchProfile();
+          showInfo("To change your plan, payment method, or cancel, choose a plan above or contact support.");
         } catch (error: any) {
-          console.error("Error managing subscription (simulated):", error);
-          showError(`Failed to manage subscription: ${error.message}`);
+          console.error("Error refreshing subscription:", error);
+          showError(`Failed to refresh subscription: ${error.message}`);
         } finally {
           setIsManagingSubscription(false);
-          await fetchProfile(); // Re-fetch profile to update plan status
         }
       };
 

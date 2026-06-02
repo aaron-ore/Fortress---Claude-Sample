@@ -10,6 +10,115 @@
 -- uuid_generate_v4()). If needed: create extension if not exists "uuid-ossp";
 -- =====================================================================
 
+-- 0) Core restaurant tables: units_of_measure, recipes, recipe_ingredients.
+--    These predate the variance pivot and have drifted on live databases
+--    (older copies are missing columns the app now reads/writes, which makes
+--    PostgREST return 400 on inserts/filters). We CREATE IF NOT EXISTS the full
+--    shape AND additively ADD COLUMN IF NOT EXISTS every column, so a missing OR
+--    partial table both end up correct. Created before sections 5–8, which FK to
+--    recipes.
+
+-- 0a) units_of_measure
+CREATE TABLE IF NOT EXISTS public.units_of_measure (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  abbreviation TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'count' CHECK (category IN ('weight','volume','count','length','area')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+ALTER TABLE public.units_of_measure
+  ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS name TEXT,
+  ADD COLUMN IF NOT EXISTS abbreviation TEXT,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT now();
+-- unique (organization_id, name) used by default-unit seeding upsert
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'units_of_measure_org_name_key') THEN
+    ALTER TABLE public.units_of_measure ADD CONSTRAINT units_of_measure_org_name_key UNIQUE (organization_id, name);
+  END IF;
+END $$;
+ALTER TABLE public.units_of_measure ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view UOM in their organization" ON public.units_of_measure;
+CREATE POLICY "Users can view UOM in their organization" ON public.units_of_measure
+  FOR SELECT USING (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid()));
+DROP POLICY IF EXISTS "Admins and managers can manage UOM" ON public.units_of_measure;
+CREATE POLICY "Admins and managers can manage UOM" ON public.units_of_measure
+  FOR ALL USING (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid())
+    AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin','inventory_manager'));
+
+-- 0b) recipes
+CREATE TABLE IF NOT EXISTS public.recipes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+ALTER TABLE public.recipes
+  ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS name TEXT,
+  ADD COLUMN IF NOT EXISTS description TEXT,
+  ADD COLUMN IF NOT EXISTS category TEXT,
+  ADD COLUMN IF NOT EXISTS output_item_id UUID REFERENCES public.inventory_items(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS output_quantity NUMERIC(10,4) NOT NULL DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS output_unit_id UUID REFERENCES public.units_of_measure(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS location_id UUID REFERENCES public.inventory_folders(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS serving_size TEXT,
+  ADD COLUMN IF NOT EXISTS prep_time_minutes INTEGER,
+  ADD COLUMN IF NOT EXISTS cook_time_minutes INTEGER,
+  ADD COLUMN IF NOT EXISTS notes TEXT,
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT now();
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'recipes_org_name_key') THEN
+    ALTER TABLE public.recipes ADD CONSTRAINT recipes_org_name_key UNIQUE (organization_id, name);
+  END IF;
+END $$;
+ALTER TABLE public.recipes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view recipes in their organization" ON public.recipes;
+CREATE POLICY "Users can view recipes in their organization" ON public.recipes
+  FOR SELECT USING (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid()));
+DROP POLICY IF EXISTS "Admins and managers can manage recipes" ON public.recipes;
+CREATE POLICY "Admins and managers can manage recipes" ON public.recipes
+  FOR ALL USING (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid())
+    AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin','inventory_manager'));
+
+-- 0c) recipe_ingredients
+CREATE TABLE IF NOT EXISTS public.recipe_ingredients (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  recipe_id UUID REFERENCES public.recipes(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE NOT NULL,
+  ingredient_name TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+ALTER TABLE public.recipe_ingredients
+  ADD COLUMN IF NOT EXISTS recipe_id UUID REFERENCES public.recipes(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS inventory_item_id UUID REFERENCES public.inventory_items(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS ingredient_name TEXT,
+  ADD COLUMN IF NOT EXISTS quantity NUMERIC(10,4) NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS unit_id UUID REFERENCES public.units_of_measure(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS unit_name TEXT,
+  ADD COLUMN IF NOT EXISTS notes TEXT,
+  ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT now();
+CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_recipe ON public.recipe_ingredients(recipe_id);
+CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_org ON public.recipe_ingredients(organization_id);
+ALTER TABLE public.recipe_ingredients ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view recipe ingredients in their organization" ON public.recipe_ingredients;
+CREATE POLICY "Users can view recipe ingredients in their organization" ON public.recipe_ingredients
+  FOR SELECT USING (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid()));
+DROP POLICY IF EXISTS "Admins and managers can manage recipe ingredients" ON public.recipe_ingredients;
+CREATE POLICY "Admins and managers can manage recipe ingredients" ON public.recipe_ingredients
+  FOR ALL USING (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid())
+    AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin','inventory_manager'));
+
 -- 1) inventory_folders: location type + metadata  (enables restaurant locations)
 ALTER TABLE public.inventory_folders
   ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'warehouse'

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,9 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   PlusCircle, Trash2, Edit, Search, Utensils, Clock, ChevronDown, ChevronUp,
-  Package, Plus, X, Loader2, AlertTriangle
+  Package, Plus, X, Loader2, AlertTriangle, Ruler
 } from "lucide-react";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import AddUnitDialog from "@/components/units/AddUnitDialog";
 import { useRecipes, Recipe, RecipeIngredient, RecipeInput } from "@/context/RecipeContext";
 import { useUnitOfMeasure } from "@/context/UnitOfMeasureContext";
 import { useOnboarding } from "@/context/OnboardingContext";
@@ -43,6 +45,7 @@ interface IngredientRowProps {
 const IngredientRow: React.FC<IngredientRowProps> = ({ ing, index, onChange, onRemove }) => {
   const { units } = useUnitOfMeasure();
   const { inventoryItems } = useInventory();
+  const [addUnitOpen, setAddUnitOpen] = useState(false);
 
   const handleItemSelect = (itemId: string) => {
     const item = inventoryItems.find(i => i.id === itemId);
@@ -105,7 +108,14 @@ const IngredientRow: React.FC<IngredientRowProps> = ({ ing, index, onChange, onR
         />
       </div>
       <div className="col-span-3">
-        <Select value={ing.unitId || "_none"} onValueChange={(v) => v === "_none" ? onChange(index, { ...ing, unitId: undefined, unitName: undefined }) : handleUnitSelect(v)}>
+        <Select
+          value={ing.unitId || "_none"}
+          onValueChange={(v) => {
+            if (v === "_new") { setAddUnitOpen(true); return; }
+            if (v === "_none") { onChange(index, { ...ing, unitId: undefined, unitName: undefined }); return; }
+            handleUnitSelect(v);
+          }}
+        >
           <SelectTrigger className="h-8 text-xs">
             <SelectValue placeholder="Unit..." />
           </SelectTrigger>
@@ -114,8 +124,14 @@ const IngredientRow: React.FC<IngredientRowProps> = ({ ing, index, onChange, onR
             {units.map(u => (
               <SelectItem key={u.id} value={u.id}>{u.name} ({u.abbreviation})</SelectItem>
             ))}
+            <SelectItem value="_new" className="text-primary font-medium">+ New unit…</SelectItem>
           </SelectContent>
         </Select>
+        <AddUnitDialog
+          open={addUnitOpen}
+          onClose={() => setAddUnitOpen(false)}
+          onCreated={(u) => onChange(index, { ...ing, unitId: u.id, unitName: u.abbreviation })}
+        />
       </div>
       <div className="col-span-2">
         <Input
@@ -172,6 +188,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ open, onClose, initialRecipe })
   const [notes, setNotes] = useState("");
   const [ingredients, setIngredients] = useState<DraftIngredient[]>([emptyIngredient()]);
   const [isSaving, setIsSaving] = useState(false);
+  const [outputAddUnitOpen, setOutputAddUnitOpen] = useState(false);
 
   const restaurantLocations = inventoryFolders.filter(f => f.locationType === 'restaurant');
 
@@ -315,7 +332,13 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ open, onClose, initialRecipe })
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="output-unit">Output Unit</Label>
-              <Select value={outputUnitId || "_none"} onValueChange={v => setOutputUnitId(v === "_none" ? "" : v)}>
+              <Select
+                value={outputUnitId || "_none"}
+                onValueChange={v => {
+                  if (v === "_new") { setOutputAddUnitOpen(true); return; }
+                  setOutputUnitId(v === "_none" ? "" : v);
+                }}
+              >
                 <SelectTrigger id="output-unit">
                   <SelectValue placeholder="Unit..." />
                 </SelectTrigger>
@@ -324,8 +347,14 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ open, onClose, initialRecipe })
                   {units.map(u => (
                     <SelectItem key={u.id} value={u.id}>{u.name} ({u.abbreviation})</SelectItem>
                   ))}
+                  <SelectItem value="_new" className="text-primary font-medium">+ New unit…</SelectItem>
                 </SelectContent>
               </Select>
+              <AddUnitDialog
+                open={outputAddUnitOpen}
+                onClose={() => setOutputAddUnitOpen(false)}
+                onCreated={(u) => setOutputUnitId(u.id)}
+              />
             </div>
           </div>
 
@@ -516,9 +545,14 @@ const RecipesPage = () => {
           </p>
         </div>
         {canManage && (
-          <Button onClick={() => { setRecipeToEdit(null); setIsFormOpen(true); }} className="shrink-0">
-            <PlusCircle className="h-4 w-4 mr-2" /> New Recipe
-          </Button>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" asChild>
+              <Link to="/units"><Ruler className="h-4 w-4 mr-2" /> Manage units</Link>
+            </Button>
+            <Button onClick={() => { setRecipeToEdit(null); setIsFormOpen(true); }}>
+              <PlusCircle className="h-4 w-4 mr-2" /> New Recipe
+            </Button>
+          </div>
         )}
       </div>
 
