@@ -41,7 +41,7 @@ import { useProfile } from "@/context/ProfileContext";
 const formSchema = z.object({
   name: z.string().min(1, "Item name is required"),
   description: z.string().optional(),
-  sku: z.string().min(1, "SKU is required"),
+  sku: z.string().optional(), // Required for non-restaurant items; enforced in onSubmit by location type.
   category: z.string().min(1, "Category is required"),
   pickingBinQuantity: z.number().min(0, "Must be non-negative"),
   overstockQuantity: z.number().min(0, "Must be non-negative"),
@@ -156,6 +156,15 @@ const EditInventoryItem = () => {
     }
   }, [item, id, form]);
 
+  const watchFolderId = form.watch("folderId");
+  // Restaurant items don't require a SKU.
+  const isRestaurantItem =
+    inventoryFolders.find((f) => f.id === watchFolderId)?.locationType === "restaurant";
+  const generateFallbackSku = () => {
+    const base = (form.getValues("name") || "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 16) || "ITEM";
+    return `${base}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  };
+
   const watchSku = form.watch("sku");
   useEffect(() => {
     const updateQrCode = async () => {
@@ -216,6 +225,12 @@ const EditInventoryItem = () => {
       showError("No permission to update items.");
       return;
     }
+    // SKU is required for non-restaurant items only.
+    if (!isRestaurantItem && !values.sku?.trim()) {
+      form.setError("sku", { type: "manual", message: "SKU is required" });
+      showError("SKU is required.");
+      return;
+    }
     setIsSaving(true);
     let finalImageUrlForDb: string | null | undefined; // This will be the INTERNAL PATH or null
 
@@ -270,7 +285,10 @@ const EditInventoryItem = () => {
     }
 
     try {
-      const finalBarcodeValue = values.sku || undefined;
+      // Restaurant items may be saved without a SKU; keep the existing one or
+      // auto-generate so the unique constraint and QR code still work.
+      const finalSku = values.sku?.trim() || item.sku || generateFallbackSku();
+      const finalBarcodeValue = finalSku || undefined;
 
       if (!values.folderId || values.folderId === "no-folders") {
         showError("Select a folder for the item.");
@@ -281,6 +299,7 @@ const EditInventoryItem = () => {
       await updateInventoryItem({
         ...item,
         ...values,
+        sku: finalSku,
         folderId: values.folderId,
         tags: values.tags?.split(',').map((tag: string) => tag.trim()).filter(Boolean),
         notes: values.notes,
@@ -366,9 +385,16 @@ const EditInventoryItem = () => {
                 name="sku"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SKU</FormLabel>
+                    <FormLabel>
+                      SKU {isRestaurantItem && <span className="text-xs text-muted-foreground">(optional)</span>}
+                    </FormLabel>
                     <FormControl>
-                      <Input {...field} disabled={!canManageInventory} />
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        placeholder={isRestaurantItem ? "Optional — auto-generated if left blank" : undefined}
+                        disabled={!canManageInventory}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

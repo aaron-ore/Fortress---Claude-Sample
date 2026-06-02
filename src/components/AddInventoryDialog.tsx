@@ -123,6 +123,18 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     updateQrCode();
   }, [sku]);
 
+  // Restaurant locations don't require a SKU (food items rarely have one).
+  // We key off the selected main folder's location type.
+  const selectedFolder = inventoryFolders.find((f) => f.id === selectedMainFolderId);
+  const isRestaurant = selectedFolder?.locationType === "restaurant";
+
+  // For restaurant items left without a SKU, derive a unique one from the name
+  // so the unique constraint and QR generation still work.
+  const generateFallbackSku = () => {
+    const base = itemName.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 16) || "ITEM";
+    return `${base}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  };
+
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
@@ -191,7 +203,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
 
     if (
       !itemName.trim() ||
-      !sku.trim() ||
+      (!isRestaurant && !sku.trim()) ||
       !category.trim() ||
       !unitCost ||
       !retailPrice ||
@@ -223,26 +235,33 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       return;
     }
 
-    const { data: existingItem, error: fetchError } = await supabase
-      .from('inventory_items')
-      .select('sku')
-      .eq('sku', sku.trim())
-      .eq('organization_id', profile.organizationId)
-      .single();
+    // Only check for duplicates when a SKU was actually entered. Restaurant items
+    // may be left blank (we generate one below).
+    if (sku.trim()) {
+      const { data: existingItem, error: fetchError } = await supabase
+        .from('inventory_items')
+        .select('sku')
+        .eq('sku', sku.trim())
+        .eq('organization_id', profile.organizationId)
+        .single();
 
-    if (existingItem) {
-      showError(`SKU '${sku.trim()}' already exists.`);
-      setIsAddingItem(false); // Reset loading state
-      return;
+      if (existingItem) {
+        showError(`SKU '${sku.trim()}' already exists.`);
+        setIsAddingItem(false); // Reset loading state
+        return;
+      }
+      if (fetchError && fetchError.code === 'PGRST116') { // PGRST116 means "no rows found", which is expected for a non-duplicate
+        // No item found, proceed
+      } else if (fetchError) {
+        console.error("Error checking for duplicate SKU:", fetchError);
+        showError("Failed to check for duplicate SKU.");
+        setIsAddingItem(false); // Reset loading state
+        return;
+      }
     }
-    if (fetchError && fetchError.code === 'PGRST116') { // PGRST116 means "no rows found", which is expected for a non-duplicate
-      // No item found, proceed
-    } else if (fetchError) {
-      console.error("Error checking for duplicate SKU:", fetchError);
-      showError("Failed to check for duplicate SKU.");
-      setIsAddingItem(false); // Reset loading state
-      return;
-    }
+
+    // Final SKU: use what was entered, otherwise auto-generate (restaurant items).
+    const finalSku = sku.trim() || generateFallbackSku();
 
     let finalImageUrl: string | undefined | null = null; // This will be the INTERNAL PATH or null
     if (imageFile) {
@@ -272,7 +291,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     const newItem = {
       name: itemName.trim(),
       description: description.trim(),
-      sku: sku.trim(),
+      sku: finalSku,
       category: category.trim(),
       pickingBinQuantity: finalPickingBinQuantity,
       overstockQuantity: finalOverstockQuantity,
@@ -314,7 +333,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
 
   const isFormInvalid =
     !itemName.trim() ||
-    !sku.trim() ||
+    (!isRestaurant && !sku.trim()) ||
     !category.trim() ||
     isNaN(parsedUnitCost) || parsedUnitCost < 0 ||
     isNaN(parsedRetailPrice) || parsedRetailPrice < 0 ||
@@ -364,17 +383,21 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
               id="itemName"
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
-              placeholder="e.g., Laptop Pro X"
+              placeholder={isRestaurant ? "e.g., Ground Beef" : "e.g., Laptop Pro X"}
               disabled={!canManageInventory} // NEW: Disable input if no permission
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="sku">SKU <span className="text-red-500">*</span></Label>
+            <Label htmlFor="sku">
+              SKU {isRestaurant
+                ? <span className="text-xs text-muted-foreground">(optional)</span>
+                : <span className="text-red-500">*</span>}
+            </Label>
             <Input
               id="sku"
               value={sku}
               onChange={(e) => setSku(e.target.value)}
-              placeholder="e.g., LPX-512-16"
+              placeholder={isRestaurant ? "Optional — auto-generated if left blank" : "e.g., LPX-512-16"}
               disabled={!canManageInventory} // NEW: Disable input if no permission
             />
           </div>
