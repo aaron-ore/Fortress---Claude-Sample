@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardList, Loader2, Save, Search } from "lucide-react";
 import PeriodPicker from "@/components/variance/PeriodPicker";
+import VarianceWorkflowSteps from "@/components/variance/VarianceWorkflowSteps";
 import { useProfile } from "@/context/ProfileContext";
 import { useInventory } from "@/context/InventoryContext";
 import { useUnitOfMeasure } from "@/context/UnitOfMeasureContext";
@@ -81,6 +83,8 @@ const VarianceCounts = () => {
         </p>
       </div>
 
+      <VarianceWorkflowSteps />
+
       <Card>
         <CardHeader><CardTitle className="text-base">Period</CardTitle></CardHeader>
         <CardContent><PeriodPicker value={periodId} onChange={setPeriodId} canManage={canManage} /></CardContent>
@@ -114,7 +118,12 @@ const VarianceCounts = () => {
               <Loader2 className="h-5 w-5 animate-spin" /> Loading counts...
             </div>
           ) : filtered.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No items to count for this location.</p>
+            <p className="text-muted-foreground text-sm">
+              No items to count for this location.{" "}
+              <Link to="/inventory" className="text-primary font-medium hover:underline">
+                Add inventory items first →
+              </Link>
+            </p>
           ) : (
             <div className="space-y-2">
               {filtered.map((item) => (

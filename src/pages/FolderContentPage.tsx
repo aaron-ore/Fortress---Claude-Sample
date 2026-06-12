@@ -107,9 +107,9 @@ const FolderContentPage: React.FC = () => {
     setItemToDelete(null);
   };
 
-  const handleCreateOrder = useCallback((item: InventoryItem) => {
-    showError(`Create order for ${item.name} (feature not implemented yet)`);
-  }, []);
+  const handleCreateOrder = useCallback((_item: InventoryItem) => {
+    navigate("/create-po");
+  }, [navigate]);
 
   const navigateToFolder = useCallback((id: string) => {
     navigate(`/folders/${id}`);

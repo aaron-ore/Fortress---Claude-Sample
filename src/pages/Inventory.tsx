@@ -279,9 +279,9 @@ const Inventory: React.FC = () => {
     setIsScanItemDialogOpen(true);
   };
 
-  const handleCreateOrder = useCallback((item: InventoryItem) => {
-    showError(`Create order for ${item.name} (feature not implemented yet)`);
-  }, []);
+  const handleCreateOrder = useCallback((_item: InventoryItem) => {
+    navigate("/create-po");
+  }, [navigate]);
 
   const navigateToFolder = useCallback((folderId: string) => {
     navigate(`/folders/${folderId}`);
@@ -522,7 +522,28 @@ const Inventory: React.FC = () => {
                 </div>
               ) : (
                 !searchTerm && topLevelFolders.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">No inventory items or folders found. Add your first folder or item!</p>
+                  <div className="text-center py-12 space-y-4">
+                    <PackagePlus className="h-12 w-12 mx-auto text-muted-foreground/40" />
+                    <div>
+                      <p className="text-lg font-medium">Your inventory is empty</p>
+                      <p className="text-muted-foreground text-sm max-w-md mx-auto mt-1">
+                        Start by creating a folder for a storage area (walk-in, freezer, dry storage), then add items to it — one at a time or all at once from a CSV.
+                      </p>
+                    </div>
+                    {canManageInventory && (
+                      <div className="flex flex-wrap justify-center gap-2">
+                        <Button onClick={handleAddFolderClick}>
+                          <PlusCircle className="h-4 w-4 mr-2" /> Create First Folder
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsAddInventoryDialogOpen(true)}>
+                          <PlusCircle className="h-4 w-4 mr-2" /> Add an Item
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsImportCsvDialogOpen(true)}>
+                          <Upload className="h-4 w-4 mr-2" /> Import from CSV
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 )
               )}
             </div>

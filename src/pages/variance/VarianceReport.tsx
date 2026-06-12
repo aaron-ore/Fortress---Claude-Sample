@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingDown, Loader2, CalendarRange } from "lucide-react";
 import PeriodPicker from "@/components/variance/PeriodPicker";
+import VarianceWorkflowSteps from "@/components/variance/VarianceWorkflowSteps";
 import VarianceResultView from "@/components/variance/VarianceResultView";
 import { useProfile } from "@/context/ProfileContext";
 import { useInventory } from "@/context/InventoryContext";
@@ -144,6 +145,8 @@ const VarianceReport = () => {
           <PeriodPicker value={periodId} onChange={setPeriodId} canManage={canManage} />
         </div>
       </div>
+
+      <VarianceWorkflowSteps />
 
       {loading ? (
         <div className="text-center py-16 text-muted-foreground flex items-center justify-center gap-2">

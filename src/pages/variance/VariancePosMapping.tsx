@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link2, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 import PeriodPicker from "@/components/variance/PeriodPicker";
+import VarianceWorkflowSteps from "@/components/variance/VarianceWorkflowSteps";
 import { useProfile } from "@/context/ProfileContext";
 import { useRecipes } from "@/context/RecipeContext";
 import { useSalesImport, MenuItemSale } from "@/context/SalesImportContext";
@@ -124,6 +126,8 @@ const VariancePosMapping = () => {
         </p>
       </div>
 
+      <VarianceWorkflowSteps />
+
       <Card>
         <CardHeader><CardTitle className="text-base">Period</CardTitle></CardHeader>
         <CardContent><PeriodPicker value={periodId} onChange={setPeriodId} canManage={canManage} /></CardContent>
@@ -136,7 +140,12 @@ const VariancePosMapping = () => {
       ) : !periodId ? (
         <p className="text-muted-foreground text-sm">Select a period to map its imported sales.</p>
       ) : aggregates.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No sales imported for this period yet.</p>
+        <p className="text-muted-foreground text-sm">
+          No sales imported for this period yet.{" "}
+          <Link to="/variance/sales-import" className="text-primary font-medium hover:underline">
+            Go to step 1: Import Sales →
+          </Link>
+        </p>
       ) : (
         <>
           <Card>

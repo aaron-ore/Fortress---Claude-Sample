@@ -8,6 +8,20 @@ import { CheckCircle } from "lucide-react";
 import { useProfile } from "@/context/ProfileContext";
 import Footer from "@/components/Footer";
 import PolicyDialog from "@/components/PolicyDialog";
+import { supabase } from "@/lib/supabaseClient";
+import { showSuccess } from "@/utils/toast";
+
+// Seeded once at onboarding so the first "Add Item" isn't blocked by an empty
+// category list. Users can rename or delete these in Manage Categories.
+const DEFAULT_CATEGORIES = [
+  "Produce",
+  "Meat & Seafood",
+  "Dairy",
+  "Dry Goods",
+  "Beverages",
+  "Frozen",
+  "Supplies",
+];
 
 const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,7 +38,35 @@ const OnboardingPage: React.FC = () => {
     }
   }, [isLoadingProfile, profile?.hasOnboardingWizardCompleted, navigate]);
 
+  const seedDefaultCategories = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !profile?.organizationId) return;
+
+      const { count, error: countError } = await supabase
+        .from("categories")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", profile.organizationId);
+      if (countError || (count ?? 0) > 0) return;
+
+      const { error } = await supabase.from("categories").insert(
+        DEFAULT_CATEGORIES.map((name) => ({
+          name,
+          user_id: session.user.id,
+          organization_id: profile.organizationId,
+        })),
+      );
+      if (!error) {
+        showSuccess("Starter categories added — edit them anytime under Manage Categories.");
+      }
+    } catch (error) {
+      // Seeding is a convenience; never block onboarding on it.
+      console.error("Failed to seed default categories:", error);
+    }
+  };
+
   const handleOnboardingComplete = async () => {
+    await seedDefaultCategories();
     await markOnboardingComplete();
     navigate("/", { replace: true });
   };

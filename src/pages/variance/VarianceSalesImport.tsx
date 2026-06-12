@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Upload, FileSpreadsheet, Loader2, CheckCircle2, AlertTriangle, Trash2 } from "lucide-react";
 import PeriodPicker from "@/components/variance/PeriodPicker";
+import VarianceWorkflowSteps from "@/components/variance/VarianceWorkflowSteps";
 import { useProfile } from "@/context/ProfileContext";
 import { useSalesImport, MenuItemSale } from "@/context/SalesImportContext";
 import { parseSalesCsvBinary, ParsedSalesRow } from "@/lib/salesCsvParser";
@@ -48,8 +49,8 @@ const VarianceSalesImport = () => {
         const { rows, errors } = parseSalesCsvBinary(bin);
         setParsed(rows);
         setParseErrors(errors);
-      } catch (err: any) {
-        showError(`Failed to parse CSV: ${err.message}`);
+      } catch (err: unknown) {
+        showError(`Failed to parse CSV: ${err instanceof Error ? err.message : "unknown error"}`);
       }
     };
     reader.readAsBinaryString(f);
@@ -85,6 +86,8 @@ const VarianceSalesImport = () => {
           Import a POS sales export (menu item, quantity sold, date) for a variance period. CSV only — no live POS connection.
         </p>
       </div>
+
+      <VarianceWorkflowSteps />
 
       <Card>
         <CardHeader><CardTitle className="text-base">1. Choose period</CardTitle></CardHeader>
