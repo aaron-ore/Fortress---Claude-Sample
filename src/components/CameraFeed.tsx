@@ -14,15 +14,20 @@ interface CameraFeedProps {
   onLoading: (loading: boolean) => void;
   onError: (errorMessage: string | null) => void;
   isActive: boolean; // Prop to control start/stop from parent
+  /** Keep scanning after each successful decode (for receiving many items). */
+  continuous?: boolean;
 }
 
-const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onError, isActive }) => {
+const DUPLICATE_SCAN_COOLDOWN_MS = 1500; // ignore the same code held in frame
+
+const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onError, isActive, continuous = false }) => {
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const isCameraStartedRef = useRef(false);
   const isStartingRef = useRef(false);
   const currentAttemptIndexRef = useRef(0);
   const loadingStartTimeRef = useRef<number | null>(null);
   const scannerDivRef = useRef<HTMLDivElement>(null); // Ref for the scanner div
+  const lastScanRef = useRef<{ code: string; time: number }>({ code: "", time: 0 });
 
   const [internalScannerError, setInternalScannerError] = useState<string | null>(null);
   const [internalIsLoading, setInternalIsLoading] = useState(true);
@@ -183,6 +188,17 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onErr
               cameraSelection,
               html5QrcodeCameraScanConfig,
               async (decodedText) => {
+                if (continuous) {
+                  // Stay live; debounce the same code held in the frame so one
+                  // barcode isn't counted dozens of times per second.
+                  const now = Date.now();
+                  if (decodedText === lastScanRef.current.code && now - lastScanRef.current.time < DUPLICATE_SCAN_COOLDOWN_MS) {
+                    return;
+                  }
+                  lastScanRef.current = { code: decodedText, time: now };
+                  onScanSuccess(decodedText);
+                  return;
+                }
                 console.log("[CameraFeed] Scan successful:", decodedText);
                 await stopScanner(); // Stop camera after successful scan
                 onScanSuccess(decodedText);
@@ -252,7 +268,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onErr
     };
 
     executeStartAttempt(); // Initial call to start the process
-  }, [isActive, onScanSuccess, onLoading, onError, stopScanner, clearScanner]);
+  }, [isActive, onScanSuccess, onLoading, onError, stopScanner, clearScanner, continuous]);
 
 
   const handleRetryScan = useCallback(async () => {

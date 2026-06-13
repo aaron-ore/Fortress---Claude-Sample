@@ -373,7 +373,8 @@ const QuickScanStation: React.FC = () => {
       <CameraScannerDialog
         isOpen={cameraOpen}
         onClose={() => { setCameraOpen(false); focusInput(); }}
-        onScanSuccess={(text) => { setCameraOpen(false); handleResolve(text); }}
+        onScanSuccess={(text) => handleResolve(text)}
+        continuous
         title={`Scan to ${modeMeta[scanMode].label}`}
         description="Point your camera at a barcode or QR code."
       />

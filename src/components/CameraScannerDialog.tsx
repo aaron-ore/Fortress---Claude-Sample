@@ -20,6 +20,8 @@ interface CameraScannerDialogProps {
   onScanSuccess: (decodedText: string) => void;
   title?: string;
   description?: string;
+  /** Keep the camera live and fire onScanSuccess for each scan (no auto-close). */
+  continuous?: boolean;
 }
 
 const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
@@ -28,6 +30,7 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
   onScanSuccess,
   title = "Scan Barcode / QR Code",
   description = "Point your camera at a barcode or QR code to scan.",
+  continuous = false,
 }) => {
   const [manualInputMode, setManualInputMode] = useState(false);
   const [manualInputValue, setManualInputValue] = useState("");
@@ -122,7 +125,15 @@ const CameraScannerDialog: React.FC<CameraScannerDialogProps> = ({
                   onScanSuccess={onScanSuccess}
                   onLoading={handleCameraFeedLoading}
                   onError={handleCameraFeedError}
+                  continuous={continuous}
                 />
+                {continuous && !isCameraLoading && !cameraError && (
+                  <div className="absolute bottom-2 inset-x-0 flex justify-center z-10">
+                    <span className="rounded-full bg-black/70 px-3 py-1 text-xs text-white">
+                      Continuous mode — keep scanning, tap Close when done
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}

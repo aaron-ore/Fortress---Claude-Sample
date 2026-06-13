@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, ListOrdered, Undo2, MapPin, Repeat } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import WarehouseDashboard from "@/components/warehouse-operations/WarehouseDashboard";
@@ -34,8 +33,7 @@ const WarehouseOperationsPage: React.FC = () => {
   const { profile } = useProfile();
   const { isCollapsed: _isCollapsed } = useSidebar();
 
-
-  // NEW: Role-based permissions for warehouse operations
+  // Role-based permissions for warehouse operations
   const canViewWarehouseOps = profile?.role === 'admin' || profile?.role === 'inventory_manager' || profile?.role === 'viewer';
   const canLookupItems = profile?.role === 'admin' || profile?.role === 'inventory_manager' || profile?.role === 'viewer';
   const canReceiveInventory = profile?.role === 'admin' || profile?.role === 'inventory_manager';
@@ -50,39 +48,25 @@ const WarehouseOperationsPage: React.FC = () => {
   const canCycleCount = profile?.role === 'admin' || profile?.role === 'inventory_manager';
   const canReportIssues = profile?.role === 'admin' || profile?.role === 'inventory_manager' || profile?.role === 'viewer';
 
-
-  const [activeTab, setActiveTab] = useState("dashboard");
-
   const [isCameraScannerDialogOpen, setIsCameraScannerDialogOpen] = useState(false);
   const [scanCallback, setScanCallback] = useState<((scannedData: string) => void) | null>(null);
   const [scannedDataForTool, setScannedDataForTool] = useState<string | null>(null);
 
-  const [isItemLookupDialogOpen, setIsItemLookupDialogOpen] = useState(false);
-  const [isReceiveInventoryDialogOpen, setIsReceiveInventoryDialogOpen] = useState(false);
-  const [isFulfillOrderDialogOpen, setIsFulfillOrderDialogOpen] = useState(false);
-  const [isShipOrderDialogOpen, setIsShipOrderDialogOpen] = useState(false);
-  const [isPickingWaveManagementDialogOpen, setIsPickingWaveManagementDialogOpen] = useState(false);
-  const [isReplenishmentManagementDialogOpen, setIsReplenishmentManagementDialogOpen] = useState(false);
-  const [isShippingVerificationDialogOpen, setIsShippingVerificationDialogOpen] = useState(false);
-  const [isReturnsProcessingDialogOpen, setIsReturnsProcessingDialogOpen] = useState(false);
-  const [isStockTransferDialogOpen, setIsStockTransferDialogOpen] = useState(false);
-  const [isCycleCountDialogOpen, setIsCycleCountDialogOpen] = useState(false);
-  const [isIssueReportDialogOpen, setIsIssueReportDialogOpen] = useState(false);
-  const [isPutawayDialogOpen, setIsPutawayDialogOpen] = useState(false);
-
-  const dialogStates = {
-    "item-lookup": { isOpen: isItemLookupDialogOpen, setIsOpen: setIsItemLookupDialogOpen, canAccess: canLookupItems },
-    "receive-inventory": { isOpen: isReceiveInventoryDialogOpen, setIsOpen: setIsReceiveInventoryDialogOpen, canAccess: canReceiveInventory },
-    "fulfill-order": { isOpen: isFulfillOrderDialogOpen, setIsOpen: setIsFulfillOrderDialogOpen, canAccess: canFulfillOrders },
-    "ship-order": { isOpen: isShipOrderDialogOpen, setIsOpen: setIsShipOrderDialogOpen, canAccess: canShipOrders },
-    "picking-wave": { isOpen: isPickingWaveManagementDialogOpen, setIsOpen: setIsPickingWaveManagementDialogOpen, canAccess: canManagePickingWaves },
-    "replenishment": { isOpen: isReplenishmentManagementDialogOpen, setIsOpen: setIsReplenishmentManagementDialogOpen, canAccess: canManageReplenishment },
-    "shipping-verify": { isOpen: isShippingVerificationDialogOpen, setIsOpen: setIsShippingVerificationDialogOpen, canAccess: canVerifyShipping },
-    "returns-process": { isOpen: isReturnsProcessingDialogOpen, setIsOpen: setIsReturnsProcessingDialogOpen, canAccess: canProcessReturns },
-    "stock-transfer": { isOpen: isStockTransferDialogOpen, setIsOpen: setIsStockTransferDialogOpen, canAccess: canTransferStock },
-    "cycle-count": { isOpen: isCycleCountDialogOpen, setIsOpen: setIsCycleCountDialogOpen, canAccess: canCycleCount },
-    "issue-report": { isOpen: isIssueReportDialogOpen, setIsOpen: setIsIssueReportDialogOpen, canAccess: canReportIssues },
-    "putaway": { isOpen: isPutawayDialogOpen, setIsOpen: setIsPutawayDialogOpen, canAccess: canPutaway },
+  // Per-operation access. Which dialog is open is derived purely from the URL
+  // hash (single source of truth) — no parallel boolean state to fall out of sync.
+  const accessByKey: Record<string, boolean> = {
+    "item-lookup": canLookupItems,
+    "receive-inventory": canReceiveInventory,
+    "putaway": canPutaway,
+    "fulfill-order": canFulfillOrders,
+    "ship-order": canShipOrders,
+    "picking-wave": canManagePickingWaves,
+    "replenishment": canManageReplenishment,
+    "shipping-verify": canVerifyShipping,
+    "returns-process": canProcessReturns,
+    "stock-transfer": canTransferStock,
+    "cycle-count": canCycleCount,
+    "issue-report": canReportIssues,
   };
 
   const operationButtons = [
@@ -101,28 +85,20 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "issue-report", label: "Report Issue", icon: AlertTriangle, type: "dialog", canAccess: canReportIssues },
   ];
 
+  const openKey = location.hash.replace("#", "");
+  const isDialogOpen = (key: string) => openKey === key && !!accessByKey[key];
+  const isDashboard = !openKey || openKey === "dashboard";
+
+  // If the hash points to a dialog the user can't access (or an unknown key),
+  // clear it back to the dashboard.
+  const blockedHash = !!openKey && openKey !== "dashboard" && !accessByKey[openKey];
   useEffect(() => {
-    const hash = location.hash.replace("#", "");
+    if (blockedHash) navigate(location.pathname, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blockedHash]);
 
-    Object.entries(dialogStates).forEach(([_key, state]) => {
-      if (state.isOpen) state.setIsOpen(false);
-    });
-
-    if (hash === "dashboard") {
-      setActiveTab("dashboard");
-    } else {
-      const dialogKey = hash as keyof typeof dialogStates;
-      if (dialogStates[dialogKey] && dialogStates[dialogKey].canAccess) {
-        dialogStates[dialogKey].setIsOpen(true);
-        setActiveTab("");
-      } else {
-        setActiveTab("dashboard");
-        if (hash) {
-          navigate(location.pathname, { replace: true });
-        }
-      }
-    }
-  }, [location.hash, navigate, location.pathname, profile, dialogStates]);
+  const openOperation = (key: string) => navigate(`${location.pathname}#${key}`, { replace: true });
+  const closeDialog = () => navigate(location.pathname, { replace: true });
 
   const requestScan = (callback: (scannedData: string) => void) => {
     setScanCallback(() => callback);
@@ -134,17 +110,10 @@ const WarehouseOperationsPage: React.FC = () => {
       scanCallback(decodedText);
       setScanCallback(null);
     } else {
-      // If no specific tool requested a scan, default to Item Lookup
+      // No specific tool requested the scan — default to Item Lookup.
       setScannedDataForTool(decodedText);
-      Object.entries(dialogStates).forEach(([_key, state]) => {
-        if (state.isOpen && _key !== "item-lookup") {
-          state.setIsOpen(false);
-        }
-      });
       if (canLookupItems) {
-        dialogStates["item-lookup"].setIsOpen(true);
-        navigate(`${location.pathname}#item-lookup`, { replace: true });
-        setActiveTab("");
+        openOperation("item-lookup");
         showSuccess(`Scanned: ${decodedText}. Opening Item Lookup.`);
       } else {
         showError("No permission for Item Lookup.");
@@ -160,14 +129,6 @@ const WarehouseOperationsPage: React.FC = () => {
 
   const handleScannedDataProcessed = () => {
     setScannedDataForTool(null);
-  };
-
-  const closeDialogAndClearHash = (dialogKey: keyof typeof dialogStates) => {
-    dialogStates[dialogKey].setIsOpen(false);
-    if (location.hash === `#${dialogKey}`) {
-      navigate(location.pathname, { replace: true });
-    }
-    setActiveTab("dashboard");
   };
 
   if (!isMobile) {
@@ -207,7 +168,7 @@ const WarehouseOperationsPage: React.FC = () => {
 
       <Button
         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-3 flex items-center justify-center gap-2 mb-4"
-        onClick={() => requestScan(handleScanSuccessFromDialog)} // Fixed global scan button
+        onClick={() => requestScan(handleScanSuccessFromDialog)}
         disabled={!canLookupItems}
       >
         <Scan className="h-6 w-6" />
@@ -215,130 +176,116 @@ const WarehouseOperationsPage: React.FC = () => {
       </Button>
 
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-4 p-1 bg-muted rounded-lg overflow-x-auto">
-        {operationButtons.map((op) => (
-          <Button
-            key={op.value}
-            variant="ghost"
-            className={cn(
-              "flex flex-col items-center justify-center h-24 w-full aspect-square py-3 px-2 text-sm font-medium rounded-lg transition-colors text-center",
-              op.type === "tab" && op.value === activeTab
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : op.type === "dialog" && dialogStates[op.value as keyof typeof dialogStates]?.isOpen
+        {operationButtons.map((op) => {
+          const active = op.value === "dashboard" ? isDashboard : openKey === op.value;
+          return (
+            <Button
+              key={op.value}
+              variant="ghost"
+              className={cn(
+                "flex flex-col items-center justify-center h-24 w-full aspect-square py-3 px-2 text-sm font-medium rounded-lg transition-colors text-center",
+                active
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-foreground hover:bg-muted/50 hover:text-primary"
-            )}
-            onClick={() => {
-              if (!op.canAccess) {
-                showError("No permission to access this operation.");
-                return;
-              }
-              if (op.type === "tab") {
-                setActiveTab(op.value);
-                navigate(`${location.pathname}#${op.value}`, { replace: true });
-              } else if (op.type === "dialog") {
-                const dialogKey = op.value as keyof typeof dialogStates;
-                if (dialogStates[dialogKey]) {
-                  Object.entries(dialogStates).forEach(([_key, state]) => {
-                    if (state.isOpen && _key !== dialogKey) {
-                      state.setIsOpen(false);
-                    }
-                  });
-                  dialogStates[dialogKey].setIsOpen(true);
-                  navigate(`${location.pathname}#${dialogKey}`, { replace: true });
-                  setActiveTab("");
+                  : "text-foreground hover:bg-muted/50 hover:text-primary",
+              )}
+              onClick={() => {
+                if (!op.canAccess) {
+                  showError("No permission to access this operation.");
+                  return;
                 }
-              } else if (op.type === "page-link") {
-                navigate(`/${op.value}`);
-              }
-            }}
-            disabled={!op.canAccess}
-          >
-            <op.icon className="h-6 w-6 sm:h-7 sm:w-7 mb-1" />
-            <span className="text-xs sm:text-sm font-semibold">{op.label}</span>
-          </Button>
-        ))}
+                if (op.value === "dashboard") {
+                  closeDialog();
+                } else {
+                  openOperation(op.value);
+                }
+              }}
+              disabled={!op.canAccess}
+            >
+              <op.icon className="h-6 w-6 sm:h-7 sm:w-7 mb-1" />
+              <span className="text-xs sm:text-sm font-semibold">{op.label}</span>
+            </Button>
+          );
+        })}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col">
-        <TabsContent value="dashboard" className="flex-grow min-h-0">
-          <WarehouseDashboard />
-        </TabsContent>
-      </Tabs>
+      <div className="flex-grow min-h-0">
+        <WarehouseDashboard />
+      </div>
 
       <ItemLookupDialog
-        isOpen={isItemLookupDialogOpen}
-        onClose={() => closeDialogAndClearHash("item-lookup")}
+        isOpen={isDialogOpen("item-lookup")}
+        onClose={closeDialog}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <ReceiveInventoryDialog
-        isOpen={isReceiveInventoryDialogOpen}
-        onClose={() => closeDialogAndClearHash("receive-inventory")}
+        isOpen={isDialogOpen("receive-inventory")}
+        onClose={closeDialog}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <PutawayDialog
-        isOpen={isPutawayDialogOpen}
-        onClose={() => closeDialogAndClearHash("putaway")}
+        isOpen={isDialogOpen("putaway")}
+        onClose={closeDialog}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <FulfillOrderDialog
-        isOpen={isFulfillOrderDialogOpen}
-        onClose={() => closeDialogAndClearHash("fulfill-order")}
+        isOpen={isDialogOpen("fulfill-order")}
+        onClose={closeDialog}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <ShipOrderDialog
-        isOpen={isShipOrderDialogOpen}
-        onClose={() => closeDialogAndClearHash("ship-order")}
+        isOpen={isDialogOpen("ship-order")}
+        onClose={closeDialog}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <PickingWaveManagementDialog
-        isOpen={isPickingWaveManagementDialogOpen}
-        onClose={() => closeDialogAndClearHash("picking-wave")}
+        isOpen={isDialogOpen("picking-wave")}
+        onClose={closeDialog}
       />
       <ReplenishmentManagementDialog
-        isOpen={isReplenishmentManagementDialogOpen}
-        onClose={() => closeDialogAndClearHash("replenishment")}
+        isOpen={isDialogOpen("replenishment")}
+        onClose={closeDialog}
       />
       <ShippingVerificationDialog
-        isOpen={isShippingVerificationDialogOpen}
-        onClose={() => closeDialogAndClearHash("shipping-verify")}
+        isOpen={isDialogOpen("shipping-verify")}
+        onClose={closeDialog}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <ReturnsProcessingDialog
-        isOpen={isReturnsProcessingDialogOpen}
-        onClose={() => closeDialogAndClearHash("returns-process")}
+        isOpen={isDialogOpen("returns-process")}
+        onClose={closeDialog}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <StockTransferDialog
-        isOpen={isStockTransferDialogOpen}
-        onClose={() => closeDialogAndClearHash("stock-transfer")}
+        isOpen={isDialogOpen("stock-transfer")}
+        onClose={closeDialog}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <CycleCountDialog
-        isOpen={isCycleCountDialogOpen}
-        onClose={() => closeDialogAndClearHash("cycle-count")}
+        isOpen={isDialogOpen("cycle-count")}
+        onClose={closeDialog}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
       />
       <IssueReportDialog
-        isOpen={isIssueReportDialogOpen}
-        onClose={() => closeDialogAndClearHash("issue-report")}
+        isOpen={isDialogOpen("issue-report")}
+        onClose={closeDialog}
         onScanRequest={requestScan}
         scannedDataFromGlobal={scannedDataForTool}
         onScannedDataProcessed={handleScannedDataProcessed}
