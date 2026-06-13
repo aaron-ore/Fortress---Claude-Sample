@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { mainNavItems, userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
 import { useNotifications } from "@/context/NotificationContext";
 import { useProfile } from "@/context/ProfileContext";
-import { usePreferences } from "@/context/PreferencesContext";
+import { useBusinessMode } from "@/hooks/useBusinessMode";
 import { LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
@@ -28,7 +28,7 @@ const MobileDrawerContent: React.FC<MobileDrawerContentProps> = ({ onLinkClick }
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
-  const { warehouseEnabled } = usePreferences();
+  const { mode } = useBusinessMode();
   const {  } = useOnboarding();
 
   const handleLogout = async () => {
@@ -65,7 +65,7 @@ const MobileDrawerContent: React.FC<MobileDrawerContentProps> = ({ onLinkClick }
           return null;
         }
 
-        if (item.warehouseOnly && !warehouseEnabled) {
+        if (item.modes && !item.modes.includes(mode)) {
           return null;
         }
 
@@ -121,7 +121,7 @@ const MobileDrawerContent: React.FC<MobileDrawerContentProps> = ({ onLinkClick }
         );
       })}
     </div>
-  ), [location.pathname, navigate, onLinkClick, unreadCount, profile, warehouseEnabled]);
+  ), [location.pathname, navigate, onLinkClick, unreadCount, profile, mode]);
 
   return (
     <ScrollArea className="flex-grow py-4">

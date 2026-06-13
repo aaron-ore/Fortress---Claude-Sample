@@ -23,6 +23,7 @@ import {
   TrendingDown, // Variance Finder
   Ruler, // Units of measure
 } from "lucide-react";
+import { BusinessMode } from "@/lib/businessModes";
 
 export interface NavItem {
   title: string;
@@ -31,7 +32,8 @@ export interface NavItem {
   isParent?: boolean;
   children?: NavItem[];
   adminOnly?: boolean;
-  warehouseOnly?: boolean; // hidden unless warehouse features are enabled
+  /** Modes this item appears in. Omit to show in every mode. */
+  modes?: BusinessMode[];
   mobileOnly?: boolean;
   action?: () => void;
   tag?: string;
@@ -45,6 +47,7 @@ export const mainNavItems: NavItem[] = [
     icon: TrendingDown,
     isParent: true,
     tag: "NEW",
+    modes: ["restaurant"],
     children: [
       { title: "Variance Report", href: "/variance", icon: TrendingDown },
       { title: "Sales Import", href: "/variance/sales-import", icon: Upload },
@@ -59,8 +62,8 @@ export const mainNavItems: NavItem[] = [
     isParent: true,
     children: [
       { title: "All Items", href: "/inventory", icon: Package },
-      { title: "Recipes (BOM)", href: "/recipes", icon: Utensils },
-      { title: "Units of Measure", href: "/units", icon: Ruler },
+      { title: "Recipes (BOM)", href: "/recipes", icon: Utensils, modes: ["restaurant"] },
+      { title: "Units of Measure", href: "/units", icon: Ruler, modes: ["restaurant"] },
       { title: "Locations", href: "/folders", icon: MapPin },
     ],
   },
@@ -76,7 +79,7 @@ export const mainNavItems: NavItem[] = [
       { title: "Customers", href: "/customers", icon: User },
       { title: "Integrations", href: "/integrations", icon: Plug },
       { title: "Automation", href: "/automation", icon: Zap, adminOnly: true },
-      { title: "Warehouse Operations", href: "/warehouse-operations", icon: Warehouse, warehouseOnly: true },
+      { title: "Warehouse Operations", href: "/warehouse-operations", icon: Warehouse, modes: ["warehouse"] },
     ],
   },
 ];

@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { mainNavItems, userAndSettingsNavItems, supportAndResourcesNavItems, NavItem } from "@/lib/navigation";
 import { useNotifications } from "@/context/NotificationContext";
 import { useProfile } from "@/context/ProfileContext";
-import { usePreferences } from "@/context/PreferencesContext";
+import { useBusinessMode } from "@/hooks/useBusinessMode";
 import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
@@ -31,7 +31,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
-  const { warehouseEnabled } = usePreferences();
+  const { mode } = useBusinessMode();
   const { isCollapsed, onToggleCollapse } = useSidebar();
 
   const handleLogout = async () => {
@@ -100,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
           return null;
         }
 
-        if (item.warehouseOnly && !warehouseEnabled) {
+        if (item.modes && !item.modes.includes(mode)) {
           return null;
         }
 

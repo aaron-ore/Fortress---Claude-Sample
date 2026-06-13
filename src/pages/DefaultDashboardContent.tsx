@@ -22,7 +22,8 @@ import GenerateReportButton from "@/components/dashboard/GenerateReportButton";
 import { Button } from "@/components/ui/button";
 import { FilterX, Loader2, AlertTriangle } from "lucide-react";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
-import { useProfile } from "@/context/ProfileContext"; // Import useProfile
+import { useBusinessMode } from "@/hooks/useBusinessMode";
+import { BUSINESS_MODE_DASHBOARD_TITLE } from "@/lib/businessModes";
 
 // NEW: Imports for Restaurant Mode Swaps
 import TotalStockValueCard from "@/components/dashboard/TotalStockValueCard";
@@ -35,7 +36,7 @@ const DefaultDashboardContent: React.FC = () => {
   const [isAddInventoryDialogOpen, setIsAddInventoryDialogOpen] = useState(false);
   const [isScanItemDialogOpen, setIsScanItemDialogOpen] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const { profile } = useProfile(); // Get profile to check industry
+  const { mode, isWarehouse } = useBusinessMode();
 
   const { data: dashboardData, isLoading, error, refresh } = useDashboardData(dateRange);
 
@@ -73,14 +74,16 @@ const DefaultDashboardContent: React.FC = () => {
   }
 
   const { metrics, charts, lists } = dashboardData;
-  
-  // Determine business type
-  const isRestaurant = profile?.companyProfile?.industry === 'restaurant';
+
+  // Warehouse mode gets the fulfillment/ops dashboard; restaurant and retail
+  // both get the merchandising dashboard (stock value, low stock, turnover,
+  // top sellers, open POs).
+  const showMerchandising = !isWarehouse;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h1 className="text-3xl font-bold">{isRestaurant ? "Restaurant Dashboard" : "Warehouse Dashboard"}</h1>
+        <h1 className="text-3xl font-bold">{BUSINESS_MODE_DASHBOARD_TITLE[mode]}</h1>
         <div className="flex items-center gap-2">
           <DateRangePicker dateRange={dateRange} onSelect={setDateRange} />
           {dateRange?.from && isValid(dateRange.from) && (
@@ -95,7 +98,7 @@ const DefaultDashboardContent: React.FC = () => {
         
         {/* Slot 1: Fulfillment Rate (Warehouse) / Total Stock Value (Restaurant) */}
         <div className="col-span-full md:col-span-1">
-          {isRestaurant ? (
+          {showMerchandising ? (
             <TotalStockValueCard
               totalStockValue={metrics.totalStockValue}
               totalStockValueTrendData={charts.totalStockValueTrendData}
@@ -118,7 +121,7 @@ const DefaultDashboardContent: React.FC = () => {
         
         {/* Slot 3: Issues Card (Warehouse) / Low Stock Alerts (Restaurant) */}
         <div className="col-span-full md:col-span-1">
-          {isRestaurant ? (
+          {showMerchandising ? (
             <LowStockAlertsCard
               lowStockItems={lists.lowStockItems}
             />
@@ -162,7 +165,7 @@ const DefaultDashboardContent: React.FC = () => {
         
         {/* Slot 6: Stock Discrepancy (Warehouse) / Inventory Turnover Rate (Restaurant) */}
         <div className="col-span-full md:col-span-1">
-          {isRestaurant ? (
+          {showMerchandising ? (
             <InventoryTurnoverRateCard
               inventoryTurnoverRate={metrics.inventoryTurnoverRate}
             />
@@ -177,7 +180,7 @@ const DefaultDashboardContent: React.FC = () => {
         
         {/* Slot 7: Location Stock Health (Warehouse) / Top Selling Products (Restaurant) */}
         <div className="col-span-full md:col-span-1">
-          {isRestaurant ? (
+          {showMerchandising ? (
             <TopSellingProductsCard
               topSellingProducts={lists.topSellingProducts}
             />
@@ -195,7 +198,7 @@ const DefaultDashboardContent: React.FC = () => {
           />
         </div>
         <div className="col-span-full md:col-span-1">
-          {isRestaurant ? (
+          {showMerchandising ? (
             <OpenPurchaseOrdersCard
               openPurchaseOrders={lists.openPurchaseOrders}
             />

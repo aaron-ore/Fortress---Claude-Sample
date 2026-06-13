@@ -23,6 +23,7 @@ import AddUnitDialog from "@/components/units/AddUnitDialog";
 import { generateQrCodeSvg } from "@/utils/qrCodeGenerator";
 import { supabase } from "@/lib/supabaseClient";
 import { useProfile } from "@/context/ProfileContext";
+import { useBusinessMode } from "@/hooks/useBusinessMode";
 import { Link } from "react-router-dom";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import CustomFileInput from "@/components/CustomFileInput";
@@ -47,6 +48,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const { vendors } = useVendors();
   const { units } = useUnitOfMeasure();
   const { profile } = useProfile(); // NEW: Get profile for role checks
+  const { hasFeature } = useBusinessMode(); // Mode-aware field visibility
 
   // NEW: Role-based permissions
   const canManageInventory = profile?.role === 'admin' || profile?.role === 'inventory_manager';
@@ -383,23 +385,26 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
             Enter details for the new item to add to your inventory. Fields marked with (*) are required.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-center mb-4">
-          <ToggleGroup
-            type="single"
-            value={viewMode}
-            onValueChange={(value: "simple" | "detailed") => value && setViewMode(value)}
-            aria-label="Inventory item view mode"
-            className="bg-muted rounded-md p-1"
-            disabled={!canManageInventory} // NEW: Disable toggle if no permission
-          >
-            <ToggleGroupItem value="simple" aria-label="Simple view" className="px-4 py-2 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm">
-              Simple View
-            </ToggleGroupItem>
-            <ToggleGroupItem value="detailed" aria-label="Detailed view" className="px-4 py-2 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm">
-              Detailed View
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
+        {/* Detailed view exposes warehouse picking-bin / overstock fields. */}
+        {hasFeature("pickingBins") && (
+          <div className="flex justify-center mb-4">
+            <ToggleGroup
+              type="single"
+              value={viewMode}
+              onValueChange={(value: "simple" | "detailed") => value && setViewMode(value)}
+              aria-label="Inventory item view mode"
+              className="bg-muted rounded-md p-1"
+              disabled={!canManageInventory} // NEW: Disable toggle if no permission
+            >
+              <ToggleGroupItem value="simple" aria-label="Simple view" className="px-4 py-2 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm">
+                Simple View
+              </ToggleGroupItem>
+              <ToggleGroupItem value="detailed" aria-label="Detailed view" className="px-4 py-2 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm">
+                Detailed View
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="itemName">Item Name <span className="text-red-500">*</span></Label>
@@ -457,35 +462,38 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="usageUnit">
-              Usage Unit {isRestaurant && <span className="text-xs text-muted-foreground">(used by recipes & variance)</span>}
-            </Label>
-            <Select
-              value={usageUnitId || "_none"}
-              onValueChange={(v) => {
-                if (v === "_new") { setAddUnitOpen(true); return; }
-                setUsageUnitId(v === "_none" ? "" : v);
-              }}
-              disabled={!canManageInventory}
-            >
-              <SelectTrigger id="usageUnit">
-                <SelectValue placeholder="Select a unit" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_none">No unit</SelectItem>
-                {units.map((u) => (
-                  <SelectItem key={u.id} value={u.id}>{u.name} ({u.abbreviation})</SelectItem>
-                ))}
-                <SelectItem value="_new" className="text-primary font-medium">+ New unit…</SelectItem>
-              </SelectContent>
-            </Select>
-            <AddUnitDialog
-              open={addUnitOpen}
-              onClose={() => setAddUnitOpen(false)}
-              onCreated={(u) => setUsageUnitId(u.id)}
-            />
-          </div>
+          {/* Usage unit drives recipes & food-cost variance (restaurant only). */}
+          {hasFeature("usageUnits") && (
+            <div className="space-y-2">
+              <Label htmlFor="usageUnit">
+                Usage Unit <span className="text-xs text-muted-foreground">(used by recipes & variance)</span>
+              </Label>
+              <Select
+                value={usageUnitId || "_none"}
+                onValueChange={(v) => {
+                  if (v === "_new") { setAddUnitOpen(true); return; }
+                  setUsageUnitId(v === "_none" ? "" : v);
+                }}
+                disabled={!canManageInventory}
+              >
+                <SelectTrigger id="usageUnit">
+                  <SelectValue placeholder="Select a unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">No unit</SelectItem>
+                  {units.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>{u.name} ({u.abbreviation})</SelectItem>
+                  ))}
+                  <SelectItem value="_new" className="text-primary font-medium">+ New unit…</SelectItem>
+                </SelectContent>
+              </Select>
+              <AddUnitDialog
+                open={addUnitOpen}
+                onClose={() => setAddUnitOpen(false)}
+                onCreated={(u) => setUsageUnitId(u.id)}
+              />
+            </div>
+          )}
           {viewMode === "simple" && (
             <div className="space-y-2">
               <Label htmlFor="simpleLocation">Location <span className="text-red-500">*</span></Label>
