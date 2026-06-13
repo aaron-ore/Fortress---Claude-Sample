@@ -1,8 +1,14 @@
 import React from "react";
 import DashboardVariance from "./variance/DashboardVariance";
+import RetailDashboard from "./RetailDashboard";
+import { useBusinessMode } from "@/hooks/useBusinessMode";
 
-// Dashboard is now the variance-first home screen, wired to the live engine.
+// The home dashboard adapts to the business mode. Retail gets a
+// merchandising/scan-first view; restaurant and warehouse get the
+// variance-wired home screen.
 const Dashboard: React.FC = () => {
+  const { isRetail } = useBusinessMode();
+  if (isRetail) return <RetailDashboard />;
   return <DashboardVariance />;
 };
 

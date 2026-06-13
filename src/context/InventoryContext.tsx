@@ -47,6 +47,7 @@ export interface InventoryItem {
   imageUrl: string | null | undefined; // Changed to explicitly include null and undefined
   vendorId?: string;
   barcodeUrl?: string;
+  barcode?: string; // Printed 1D product barcode (UPC/EAN/Code128), distinct from the QR-encoded SKU
   organizationId: string | null;
   autoReorderEnabled: boolean;
   autoReorderQuantity: number;
@@ -131,6 +132,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       imageUrl: finalImageUrl, // Use the intelligently determined URL
       vendorId: item.vendor_id || undefined,
       barcodeUrl: item.barcode_url || undefined,
+      barcode: item.barcode || undefined,
       organizationId: item.organization_id,
       autoReorderEnabled: item.auto_reorder_enabled || false,
       autoReorderQuantity: isNaN(autoReorderQuantity) ? 0 : autoReorderQuantity,
@@ -293,6 +295,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         image_url: internalImageUrl, // Store internal path
         vendor_id: item.vendorId, // Corrected to item.vendorId
         barcode_url: item.barcodeUrl,
+        // Only send when set so inserts work before the barcode migration is applied.
+        ...(item.barcode ? { barcode: item.barcode } : {}),
         user_id: session.user.id,
         organization_id: profile.organizationId,
         auto_reorder_enabled: item.autoReorderEnabled,
@@ -365,6 +369,8 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
         image_url: internalImageUrl, // Store internal path
         vendor_id: updatedItem.vendorId,
         barcode_url: updatedItem.barcodeUrl,
+        // Only send when set so updates work before the barcode migration is applied.
+        ...(updatedItem.barcode ? { barcode: updatedItem.barcode } : {}),
         auto_reorder_enabled: updatedItem.autoReorderEnabled,
         auto_reorder_quantity: updatedItem.autoReorderQuantity,
         shopify_product_id: updatedItem.shopifyProductId, // NEW: Update Shopify Product ID

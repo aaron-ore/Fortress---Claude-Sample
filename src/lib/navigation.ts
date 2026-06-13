@@ -22,6 +22,7 @@ import {
   Wrench, // Changed from Tool to Wrench icon for Advanced Tools
   TrendingDown, // Variance Finder
   Ruler, // Units of measure
+  ScanBarcode, // Quick Scan station
 } from "lucide-react";
 import { BusinessMode } from "@/lib/businessModes";
 
@@ -67,6 +68,7 @@ export const mainNavItems: NavItem[] = [
       { title: "Locations", href: "/folders", icon: MapPin },
     ],
   },
+  { title: "Quick Scan", href: "/quick-scan", icon: ScanBarcode, modes: ["retail", "warehouse"] },
   { title: "Orders", href: "/orders", icon: Receipt },
   { title: "Vendors", href: "/vendors", icon: Truck },
   { title: "Reports", href: "/reports", icon: BarChart },

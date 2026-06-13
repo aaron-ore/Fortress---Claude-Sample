@@ -27,6 +27,7 @@ import { useBusinessMode } from "@/hooks/useBusinessMode";
 import { Link } from "react-router-dom";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import CustomFileInput from "@/components/CustomFileInput";
+import BarcodePreview from "@/components/BarcodePreview";
 import { uploadFileToSupabase } from "@/integrations/supabase/storage";
 import { Loader2 } from "lucide-react"; // Import Loader2 for the spinner
 
@@ -35,12 +36,14 @@ interface AddInventoryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   initialFolderId?: string; // NEW: Optional prop to pre-select folder
+  initialSku?: string; // Pre-fill SKU (e.g. when creating from a failed scan)
 }
 
 const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   isOpen,
   onClose,
   initialFolderId, // NEW: Destructure initialFolderId
+  initialSku,
 }) => {
   const { addInventoryItem } = useInventory();
   const { inventoryFolders } = useOnboarding(); // Updated to inventoryFolders
@@ -58,6 +61,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const [itemName, setItemName] = useState("");
   const [description, setDescription] = useState("");
   const [sku, setSku] = useState("");
+  const [barcode, setBarcode] = useState("");
   const [category, setCategory] = useState("");
   const [simpleQuantity, setSimpleQuantity] = useState("0"); // Changed from ""
   const [pickingBinQuantity, setPickingBinQuantity] = useState("0"); // Changed from ""
@@ -87,7 +91,8 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       setViewMode("simple");
       setItemName("");
       setDescription("");
-      setSku("");
+      setSku(initialSku || "");
+      setBarcode("");
       setCategory("");
       setSimpleQuantity("0"); // Changed from ""
       setPickingBinQuantity("0"); // Changed from ""
@@ -110,7 +115,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       setAutoReorderQuantity("");
       setIsAddingItem(false); // Reset loading state
     }
-  }, [isOpen, inventoryFolders, initialFolderId]); // Added initialFolderId to dependencies
+  }, [isOpen, inventoryFolders, initialFolderId, initialSku]); // Added initialFolderId to dependencies
 
   useEffect(() => {
     const updateQrCode = async () => {
@@ -300,6 +305,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       name: itemName.trim(),
       description: description.trim(),
       sku: finalSku,
+      barcode: barcode.trim() || undefined,
       category: category.trim(),
       usageUnitId: usageUnitId || undefined,
       pickingBinQuantity: finalPickingBinQuantity,
@@ -705,6 +711,26 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
             {qrCodeSvgPreview && (
               <div className="mt-2 p-4 border border-border rounded-md bg-white flex justify-center">
                 <div dangerouslySetInnerHTML={{ __html: qrCodeSvgPreview }} />
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="barcode">
+              Barcode (UPC / EAN) <span className="text-xs text-muted-foreground">(optional)</span>
+            </Label>
+            <Input
+              id="barcode"
+              value={barcode}
+              onChange={(e) => setBarcode(e.target.value)}
+              placeholder="e.g., 036000291452"
+              disabled={!canManageInventory}
+            />
+            <p className="text-xs text-muted-foreground">
+              The printed product barcode. Scannable for lookup alongside the SKU/QR.
+            </p>
+            {barcode.trim() && (
+              <div className="mt-2 p-2 border border-border rounded-md bg-white flex justify-center">
+                <BarcodePreview value={barcode.trim()} />
               </div>
             )}
           </div>

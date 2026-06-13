@@ -36,12 +36,14 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { uploadFileToSupabase, getFilePathFromPublicUrl } from "@/integrations/supabase/storage";
 import { supabase } from "@/lib/supabaseClient";
 import CustomFileInput from "@/components/CustomFileInput";
+import BarcodePreview from "@/components/BarcodePreview";
 import { useProfile } from "@/context/ProfileContext";
 
 const formSchema = z.object({
   name: z.string().min(1, "Item name is required"),
   description: z.string().optional(),
   sku: z.string().optional(), // Required for non-restaurant items; enforced in onSubmit by location type.
+  barcode: z.string().optional(), // Printed UPC/EAN barcode, optional.
   category: z.string().min(1, "Category is required"),
   pickingBinQuantity: z.number().min(0, "Must be non-negative"),
   overstockQuantity: z.number().min(0, "Must be non-negative"),
@@ -106,7 +108,7 @@ const EditInventoryItem = () => {
         return defaultVals;
       }
       return { // Default values for new item if item is null
-        name: "", description: "", sku: "", category: "",
+        name: "", description: "", sku: "", barcode: "", category: "",
         pickingBinQuantity: 0, overstockQuantity: 0, reorderLevel: 0, pickingReorderLevel: 0,
         committedStock: 0, incomingStock: 0, unitCost: 0, retailPrice: 0,
         folderId: "", tags: "", notes: "", imageUrl: null, vendorId: "null-vendor", // Set to null
@@ -307,6 +309,7 @@ const EditInventoryItem = () => {
         vendorId: values.vendorId === "null-vendor" ? undefined : values.vendorId,
         usageUnitId: values.usageUnitId === "none-unit" ? undefined : values.usageUnitId,
         barcodeUrl: finalBarcodeValue,
+        barcode: values.barcode?.trim() || undefined,
       });
       showSuccess("Item updated!");
       await refreshInventory();
@@ -396,6 +399,31 @@ const EditInventoryItem = () => {
                         disabled={!canManageInventory}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="barcode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Barcode (UPC / EAN) <span className="text-xs text-muted-foreground">(optional)</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        placeholder="e.g., 036000291452"
+                        disabled={!canManageInventory}
+                      />
+                    </FormControl>
+                    {field.value?.trim() && (
+                      <div className="mt-2 p-2 border border-border rounded-md bg-white flex justify-center">
+                        <BarcodePreview value={field.value.trim()} />
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

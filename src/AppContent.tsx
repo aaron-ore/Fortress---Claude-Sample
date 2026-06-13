@@ -96,6 +96,7 @@ const RefundPolicy = lazyWithRetry(() => import("./pages/RefundPolicy"));
 // Customer Import hidden (legacy B2B stub, out of scope for the variance pivot)
 const Recipes = lazyWithRetry(() => import("./pages/Recipes")); // NEW: Lazy import for Recipes
 const UnitsOfMeasure = lazyWithRetry(() => import("./pages/UnitsOfMeasure"));
+const QuickScanPage = lazyWithRetry(() => import("./pages/QuickScanPage"));
 const VarianceSalesImport = lazyWithRetry(() => import("./pages/variance/VarianceSalesImport")); // Variance Finder
 const VariancePosMapping = lazyWithRetry(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
 const VarianceCounts = lazyWithRetry(() => import("./pages/variance/VarianceCounts")); // Variance Finder
@@ -137,6 +138,7 @@ const AuthenticatedApp = () => {
                                   <Route index element={<Navigate to="/home" replace />} />
                                   <Route path="home" element={<Dashboard />} />
                                   <Route path="inventory" element={<Inventory />} />
+                                  <Route path="quick-scan" element={<QuickScanPage />} />
                                   <Route path="inventory/:id" element={<EditInventoryItem />} />
                                   <Route path="inventory/:id/history" element={<ItemHistoryPage />} />
                                   <Route path="orders" element={<Orders />} />
