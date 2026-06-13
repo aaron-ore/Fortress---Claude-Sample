@@ -25,7 +25,7 @@ const Layout: React.FC = () => {
   return (
     <div className="app-main-layout min-h-screen flex bg-background text-foreground ">
       {isMobile ? (
-        <div className="flex flex-col w-full">
+        <div className="flex flex-col w-full min-w-0 overflow-x-hidden">
           <Header
             setIsNotificationSheetOpen={setIsNotificationSheetOpen}
             setIsGlobalSearchDialogOpen={setIsGlobalSearchDialogOpen}
@@ -37,7 +37,7 @@ const Layout: React.FC = () => {
             linkTo="/setup-instructions"
             linkText="Click here"
           /> */}
-          <main className="flex-grow p-4 container mx-auto">
+          <main className="flex-grow p-4 w-full max-w-full min-w-0 overflow-x-hidden">
             <BackButton /> {/* NEW: Add BackButton */}
             <Outlet />
           </main>
@@ -53,7 +53,7 @@ const Layout: React.FC = () => {
           {/* Main Content Area */}
           <div
             className={cn(
-              "flex-grow flex flex-col h-screen overflow-y-auto p-6 transition-all duration-200",
+              "flex-grow flex flex-col h-screen overflow-y-auto overflow-x-hidden min-w-0 p-6 transition-all duration-200",
               "space-y-6"
             )}
             style={{ marginLeft: isCollapsed ? `${sidebarWidthCollapsed}px` : `${sidebarWidthExpanded}px` }}
@@ -69,7 +69,7 @@ const Layout: React.FC = () => {
               linkTo="/setup-instructions"
               linkText="Click here"
             /> */}
-            <main className="flex-grow bg-card rounded-lg shadow-sm p-6">
+            <main className="flex-grow bg-card rounded-lg shadow-sm p-6 min-w-0 overflow-x-hidden">
               <BackButton /> {/* NEW: Add BackButton */}
               <Outlet />
             </main>

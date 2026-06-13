@@ -232,6 +232,8 @@
     height: 100%; /* Ensure html, body, and root div take full height */
     margin: 0;
     padding: 0;
+    max-width: 100%;
+    overflow-x: hidden; /* Universal guard: never allow horizontal page scroll on mobile */
   }
 }
 

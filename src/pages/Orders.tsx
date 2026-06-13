@@ -170,7 +170,7 @@ const Orders: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2">
         {isAdmin && isQuickBooksConnected && canSyncQuickBooks && ( // NEW: Check permission for QuickBooks sync
           <Button onClick={handleSyncSalesOrders} disabled={isSyncingQuickBooks}>
             {isSyncingQuickBooks ? (
@@ -207,11 +207,11 @@ const Orders: React.FC = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-grow">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="all">All Active Orders</TabsTrigger>
-          <TabsTrigger value="sales">Sales Orders</TabsTrigger>
-          <TabsTrigger value="purchase">Purchase Orders</TabsTrigger>
-          <TabsTrigger value="archived">Archived Orders</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1">
+          <TabsTrigger value="all" className="whitespace-normal h-auto py-1.5 text-xs sm:text-sm">All Active</TabsTrigger>
+          <TabsTrigger value="sales" className="whitespace-normal h-auto py-1.5 text-xs sm:text-sm">Sales</TabsTrigger>
+          <TabsTrigger value="purchase" className="whitespace-normal h-auto py-1.5 text-xs sm:text-sm">Purchase</TabsTrigger>
+          <TabsTrigger value="archived" className="whitespace-normal h-auto py-1.5 text-xs sm:text-sm">Archived</TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="flex-grow overflow-y-auto">
           <div className="h-full">
