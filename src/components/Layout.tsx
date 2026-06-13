@@ -25,7 +25,7 @@ const Layout: React.FC = () => {
   return (
     <div className="app-main-layout min-h-screen flex bg-background text-foreground ">
       {isMobile ? (
-        <div className="flex flex-col w-full min-w-0 overflow-x-hidden">
+        <div className="flex flex-col w-full min-w-0">
           <Header
             setIsNotificationSheetOpen={setIsNotificationSheetOpen}
             setIsGlobalSearchDialogOpen={setIsGlobalSearchDialogOpen}

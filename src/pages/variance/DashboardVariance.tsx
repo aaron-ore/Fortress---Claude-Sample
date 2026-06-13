@@ -208,7 +208,7 @@ const DashboardVariance = () => {
                   {heroPositive ? <TrendingDown className="h-4 w-4 text-red-500" /> : <TrendingUp className="h-4 w-4 text-emerald-500" />}
                   {heroPositive ? "Lost to variance this period" : "Favorable variance this period"}
                 </div>
-                <div className={`mt-2 text-5xl font-extrabold ${heroPositive ? "text-red-500" : "text-emerald-500"}`}>{money(Math.abs(metrics.hero))}</div>
+                <div className={`mt-2 text-4xl sm:text-5xl font-extrabold break-words leading-tight tabular-nums ${heroPositive ? "text-red-500" : "text-emerald-500"}`}>{money(Math.abs(metrics.hero))}</div>
                 <div className="mt-3 flex items-center gap-2 flex-wrap">
                   <Badge variant="secondary">{pct(metrics.variancePct)} of theoretical cost</Badge>
                   {activePeriod && <span className="text-xs text-muted-foreground">{activePeriod.startDate} → {activePeriod.endDate}</span>}
@@ -349,7 +349,7 @@ const Kpi = ({ icon, label, value, sub, tone }: { icon: React.ReactNode; label: 
         <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
         <span className="text-muted-foreground">{icon}</span>
       </div>
-      <div className="mt-2 text-2xl font-bold">{value}</div>
+      <div className="mt-2 text-xl sm:text-2xl font-bold break-words leading-tight tabular-nums">{value}</div>
       <div className={`mt-1 text-xs ${tone === "bad" ? "text-red-500" : tone === "good" ? "text-emerald-500" : "text-muted-foreground"}`}>{sub}</div>
     </CardContent>
   </Card>

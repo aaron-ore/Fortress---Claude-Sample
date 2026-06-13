@@ -14,7 +14,9 @@ const RetailDashboard: React.FC = () => {
   const { profile } = useProfile();
 
   const currency = profile?.companyProfile?.companyCurrency || "$";
-  const money = (n: number) => `${currency}${Math.round(n).toLocaleString()}`;
+  // Compact forms keep big KPI numbers (e.g. $1.2M) inside their cards.
+  const compact = (n: number) => new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(n);
+  const moneyCompact = (n: number) => `${currency}${compact(Math.round(n))}`;
 
   const kpis = useMemo(() => {
     let units = 0, costValue = 0, retailValue = 0;
@@ -36,10 +38,10 @@ const RetailDashboard: React.FC = () => {
   }, [inventoryItems]);
 
   const tiles = [
-    { label: "Active SKUs", value: kpis.skuCount.toLocaleString(), icon: Tags },
-    { label: "Units on hand", value: kpis.units.toLocaleString(), icon: Boxes },
-    { label: "Stock value (cost)", value: money(kpis.costValue), icon: DollarSign },
-    { label: "Retail value", value: money(kpis.retailValue), icon: TrendingUp },
+    { label: "Active SKUs", value: compact(kpis.skuCount), icon: Tags },
+    { label: "Units on hand", value: compact(kpis.units), icon: Boxes },
+    { label: "Stock value (cost)", value: moneyCompact(kpis.costValue), icon: DollarSign },
+    { label: "Retail value", value: moneyCompact(kpis.retailValue), icon: TrendingUp },
     { label: "Projected margin", value: `${kpis.margin.toFixed(0)}%`, icon: Percent },
     { label: "Low / out of stock", value: `${kpis.lowStock.length} / ${kpis.outOfStock.length}`, icon: TriangleAlert },
   ];
@@ -71,9 +73,9 @@ const RetailDashboard: React.FC = () => {
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {tiles.map((t) => (
           <Card key={t.label}>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6 min-w-0">
               <t.icon className="h-5 w-5 text-muted-foreground mb-2" />
-              <p className="text-2xl font-bold tabular-nums">{isLoadingInventory ? "—" : t.value}</p>
+              <p className="text-xl sm:text-2xl font-bold tabular-nums break-words leading-tight">{isLoadingInventory ? "—" : t.value}</p>
               <p className="text-xs text-muted-foreground mt-1">{t.label}</p>
             </CardContent>
           </Card>
@@ -141,7 +143,7 @@ const RetailDashboard: React.FC = () => {
                 {kpis.topByValue.map(({ item, value }) => (
                   <li key={item.id} className="flex items-center justify-between text-sm">
                     <Link to={`/inventory/${item.id}`} className="truncate hover:underline">{item.name}</Link>
-                    <span className="font-medium shrink-0 ml-2">{money(value)}</span>
+                    <span className="font-medium shrink-0 ml-2 tabular-nums">{moneyCompact(value)}</span>
                   </li>
                 ))}
               </ul>

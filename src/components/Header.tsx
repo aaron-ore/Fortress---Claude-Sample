@@ -75,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
 
   if (isMobile) {
     return (
-      <header className={cn("bg-sidebar-background border-b border-border px-4 py-3 flex items-center justify-between h-[60px] flex-shrink-0", className)}>
+      <header className={cn("sticky top-0 z-30 bg-sidebar-background border-b border-border pl-4 pr-5 py-3 flex items-center justify-between h-[60px] flex-shrink-0", className)}>
         <div className="flex items-center space-x-4">
           <MobileNav />
           <div className="flex items-center space-x-2">
@@ -132,7 +132,7 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
 
   // Desktop Header
   return (
-    <header className={cn("bg-sidebar-background rounded-lg shadow-sm p-4 flex items-center justify-between h-[80px] flex-shrink-0", className)}>
+    <header className={cn("sticky top-0 z-30 bg-sidebar-background rounded-lg shadow-sm p-4 flex items-center justify-between h-[80px] flex-shrink-0", className)}>
       <div className="flex items-center space-x-4 flex-grow">
         {profile?.companyProfile?.companyLogoUrl ? (
           <img src={profile.companyProfile.companyLogoUrl} alt="Company Logo" className="h-8 w-auto object-contain" />
