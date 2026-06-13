@@ -39,6 +39,17 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onErr
       /* already stopped */
     }
     controlsRef.current = null;
+    // Explicitly release the camera so reopening doesn't stall on iOS waiting
+    // for the previous (still-held) stream to free up.
+    const video = videoRef.current;
+    if (video && video.srcObject) {
+      try {
+        (video.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
+      } catch {
+        /* ignore */
+      }
+      video.srcObject = null;
+    }
     startingRef.current = false;
   }, []);
 
