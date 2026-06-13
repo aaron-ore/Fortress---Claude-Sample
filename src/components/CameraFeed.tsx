@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
+import { DecodeHintType, BarcodeFormat } from "@zxing/library";
 import { XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -52,9 +53,35 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onErr
     onError(null);
 
     try {
-      if (!readerRef.current) readerRef.current = new BrowserMultiFormatReader();
+      if (!readerRef.current) {
+        // TRY_HARDER + an explicit format list (QR plus the common retail 1D
+        // symbologies) makes 1D barcodes decode reliably; a short attempt delay
+        // scans frames frequently.
+        const hints = new Map<DecodeHintType, unknown>();
+        hints.set(DecodeHintType.TRY_HARDER, true);
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+          BarcodeFormat.QR_CODE,
+          BarcodeFormat.EAN_13,
+          BarcodeFormat.EAN_8,
+          BarcodeFormat.UPC_A,
+          BarcodeFormat.UPC_E,
+          BarcodeFormat.CODE_128,
+          BarcodeFormat.CODE_39,
+          BarcodeFormat.ITF,
+          BarcodeFormat.CODABAR,
+        ]);
+        readerRef.current = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 100 });
+      }
       const controls = await readerRef.current.decodeFromConstraints(
-        { video: { facingMode: { ideal: "environment" } } },
+        {
+          // Request a high-resolution stream — default iOS capture is too
+          // low-res for thin 1D barcode bars to separate.
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+        },
         videoRef.current,
         (result) => {
           if (!result) return; // per-frame "not found" — ignore
