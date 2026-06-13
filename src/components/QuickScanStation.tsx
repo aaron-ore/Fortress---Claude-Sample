@@ -7,7 +7,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  ScanBarcode, Search, PackagePlus, MapPin,
+  ScanBarcode, Search, PackagePlus, MapPin, Camera,
   CheckCircle2, XCircle, AlertTriangle, Plus, Minus, Loader2,
 } from "lucide-react";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
@@ -15,6 +15,7 @@ import { useStockMovement } from "@/context/StockMovementContext";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useProfile } from "@/context/ProfileContext";
 import AddInventoryDialog from "@/components/AddInventoryDialog";
+import CameraScannerDialog from "@/components/CameraScannerDialog";
 import { showError } from "@/utils/toast";
 
 type ScanMode = "check" | "in" | "out";
@@ -71,6 +72,7 @@ const QuickScanStation: React.FC = () => {
   const [notFound, setNotFound] = useState<string | null>(null);
   const [log, setLog] = useState<ScanLogEntry[]>([]);
   const [addOpen, setAddOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -237,10 +239,15 @@ const QuickScanStation: React.FC = () => {
             />
             {busy && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />}
           </div>
-          <p className="text-xs text-muted-foreground">
-            {modeMeta[scanMode].hint}
-            {scanMode !== "check" && !canManage && " You don't have permission to change stock."}
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <Button variant="outline" className="sm:w-auto" onClick={() => setCameraOpen(true)} disabled={busy}>
+              <Camera className="h-4 w-4 mr-2" /> Scan with camera
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              {modeMeta[scanMode].hint}
+              {scanMode !== "check" && !canManage && " You don't have permission to change stock."}
+            </p>
+          </div>
         </CardContent>
       </Card>
 
@@ -361,6 +368,14 @@ const QuickScanStation: React.FC = () => {
         isOpen={addOpen}
         onClose={() => { setAddOpen(false); focusInput(); }}
         initialSku={notFound || undefined}
+      />
+
+      <CameraScannerDialog
+        isOpen={cameraOpen}
+        onClose={() => { setCameraOpen(false); focusInput(); }}
+        onScanSuccess={(text) => { setCameraOpen(false); handleResolve(text); }}
+        title={`Scan to ${modeMeta[scanMode].label}`}
+        description="Point your camera at a barcode or QR code."
       />
     </div>
   );
