@@ -48,6 +48,13 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onErr
     fps: 10,
     // Removed aspectRatio: 1.0 to allow native camera aspect ratio for better compatibility
     disableFlip: false,
+    // A wide, short scan box dramatically improves 1D barcode (UPC/EAN/Code128)
+    // detection — you lay the barcode horizontally across it — while still
+    // reading QR codes fine.
+    qrbox: (viewfinderWidth: number, viewfinderHeight: number) => ({
+      width: Math.floor(Math.min(viewfinderWidth * 0.9, 480)),
+      height: Math.floor(Math.min(viewfinderHeight * 0.5, 320)),
+    }),
   };
 
   const stopScanner = useCallback(async () => {

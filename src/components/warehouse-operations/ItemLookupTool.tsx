@@ -62,7 +62,7 @@ const ItemLookupTool: React.FC<ItemLookupToolProps> = ({ onScanRequest, scannedD
       (item) =>
         item.name.toLowerCase().includes(lowerCaseSearchTerm) ||
         item.sku.toLowerCase().includes(lowerCaseSearchTerm) ||
-        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseSearchTerm)) // Match against raw barcodeUrl
+        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseSearchTerm)) || (item.barcode && item.barcode.toLowerCase().includes(lowerCaseSearchTerm)) // Match against raw barcodeUrl
     );
   }, [inventoryItems, searchTerm]);
 
@@ -82,7 +82,7 @@ const ItemLookupTool: React.FC<ItemLookupToolProps> = ({ onScanRequest, scannedD
       (item) =>
         item.name.toLowerCase().includes(lowerCaseTerm) ||
         item.sku.toLowerCase().includes(lowerCaseTerm) ||
-        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseTerm)) // Match against raw barcodeUrl
+        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseTerm)) || (item.barcode && item.barcode.toLowerCase().includes(lowerCaseTerm)) // Match against raw barcodeUrl
     );
 
     if (foundItem) {

@@ -23,6 +23,7 @@ interface CountedItem {
   folderId: string;
   isScanned: boolean;
   barcodeUrl?: string;
+  barcode?: string;
 }
 
 interface CycleCountToolProps {
@@ -86,6 +87,7 @@ const CycleCountTool: React.FC<CycleCountToolProps> = ({ onScanRequest, scannedD
       folderId: item.folderId,
       isScanned: false,
       barcodeUrl: item.barcodeUrl,
+      barcode: item.barcode,
     }));
     setItemsToCount(initialItems);
     setIsCounting(true);
@@ -126,7 +128,7 @@ const CycleCountTool: React.FC<CycleCountToolProps> = ({ onScanRequest, scannedD
     const lowerCaseScannedData = scannedData.toLowerCase();
     const scannedItem = itemsToCount.find(
       item => item.sku.toLowerCase() === lowerCaseScannedData ||
-               (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseScannedData))
+               (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseScannedData)) || (item.barcode && item.barcode.toLowerCase().includes(lowerCaseScannedData))
     );
 
     if (scannedItem) {

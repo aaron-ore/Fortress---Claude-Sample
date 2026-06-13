@@ -73,7 +73,7 @@ const ReturnsProcessingTool: React.FC<ReturnsProcessingToolProps> = ({ onScanReq
     const foundItem = inventoryItems.find(
       (item) =>
         item.sku.toLowerCase() === lowerCaseScannedData ||
-        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseScannedData))
+        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseScannedData)) || (item.barcode && item.barcode.toLowerCase().includes(lowerCaseScannedData))
     );
 
     if (foundItem) {

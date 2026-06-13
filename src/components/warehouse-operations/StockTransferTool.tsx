@@ -94,7 +94,7 @@ const StockTransferTool: React.FC<StockTransferToolProps> = ({ onScanRequest, sc
     const foundItem = inventoryItems.find(
       (item) =>
         item.sku.toLowerCase() === lowerCaseScannedData ||
-        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseScannedData))
+        (item.barcodeUrl && item.barcodeUrl.toLowerCase().includes(lowerCaseScannedData)) || (item.barcode && item.barcode.toLowerCase().includes(lowerCaseScannedData))
     );
 
     if (foundItem) {

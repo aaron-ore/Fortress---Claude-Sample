@@ -35,7 +35,7 @@ const IssueReportDialog: React.FC<IssueReportDialogProps> = ({
   if (!canReportIssues) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}> {/* Changed from Dialog */}
-        <SheetContent side="right" className="w-full sm:max-w-full h-full flex flex-col p-0"> {/* Adjusted for full screen */}
+        <SheetContent side="right" className="w-full sm:max-w-full h-full flex flex-col p-0" onOpenAutoFocus={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}> {/* Adjusted for full screen */}
           <Card className="p-6 text-center bg-card border-border">
             <CardTitle className="text-2xl font-bold mb-4">Access Denied</CardTitle>
             <CardContent>
@@ -49,7 +49,7 @@ const IssueReportDialog: React.FC<IssueReportDialogProps> = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}> {/* Changed from Dialog */}
-      <SheetContent side="right" className="w-full sm:max-w-full h-full flex flex-col p-0"> {/* Adjusted for full screen */}
+      <SheetContent side="right" className="w-full sm:max-w-full h-full flex flex-col p-0" onOpenAutoFocus={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}> {/* Adjusted for full screen */}
         <SheetHeader className="p-4 pb-2">
           <SheetTitle className="flex items-center gap-2">
             <AlertTriangle className="h-6 w-6 text-primary" /> Report an Issue
