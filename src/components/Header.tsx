@@ -4,7 +4,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, User, LogOut, Flag } from "lucide-react";
+import { Search, Bell, User, LogOut, Flag, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { showSuccess, showError } from "@/utils/toast";
 import CurrentDateTime from "./CurrentDateTime";
 import { useNotifications } from "@/context/NotificationContext";
@@ -34,6 +35,8 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
   const { unreadCount } = useNotifications();
   const { profile } = useProfile();
   const isMobile = useIsMobile();
+  const { theme, setTheme } = useTheme();
+  const isLight = theme === "light";
 
   const handleLogout = async () => {
     const { data: { session } = { session: null } } = await supabase.auth.getSession();
@@ -75,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
 
   if (isMobile) {
     return (
-      <header className={cn("sticky top-0 z-30 bg-sidebar-background border-b border-border pl-4 pr-5 py-3 flex items-center justify-between h-[60px] flex-shrink-0", className)}>
+      <header className={cn("sticky top-0 z-30 bg-sidebar-background border-b border-border pl-4 pr-6 py-3 flex items-center justify-between h-[60px] flex-shrink-0", className)}>
         <div className="flex items-center space-x-4">
           <MobileNav />
           <div className="flex items-center space-x-2">
@@ -110,7 +113,15 @@ const Header: React.FC<HeaderProps> = ({ setIsNotificationSheetOpen, setIsGlobal
         </div>
 
         <div className="flex items-center space-x-2 flex-shrink-0 min-w-0">
-          <CurrentDateTime className="text-sidebar-foreground text-xs" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(isLight ? "dark" : "light")}
+            className="text-sidebar-foreground hover:bg-white/20"
+            aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
+          >
+            {isLight ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => setIsGlobalSearchDialogOpen(true)} className="text-sidebar-foreground hover:bg-white/20">
             <Search className="h-5 w-5" />
           </Button>

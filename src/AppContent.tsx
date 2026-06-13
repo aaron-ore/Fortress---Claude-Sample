@@ -32,7 +32,7 @@ import { Loader2 } from "lucide-react";
 // Removed: import { useTutorial } from "./context/TutorialContext";
 // Removed: import TutorialTooltip from "./components/TutorialTooltip";
 import UpgradePromptDialog from "./components/UpgradePromptDialog";
-import LiveChatWidget from "./components/LiveChatWidget";
+// import LiveChatWidget from "./components/LiveChatWidget"; // hidden for now — not ready
 import Footer from "./components/Footer"; // NEW: Import Footer
 import { useAuth } from "./context/AuthContext"; // NEW: Import useAuth
 
@@ -396,7 +396,8 @@ const AppContent = () => {
         onClose={() => setIsUpgradePromptDialogOpen(false)}
       />
 
-      {!isLoadingProfile && profile && <LiveChatWidget />}
+      {/* Live chat (tawk.to) hidden for now — not ready for use. */}
+      {/* {!isLoadingProfile && profile && <LiveChatWidget />} */}
     </>
   );
 };

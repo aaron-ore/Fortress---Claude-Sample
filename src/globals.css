@@ -48,6 +48,38 @@
     --shadow-color: transparent; /* Default to transparent for dark themes */
   }
 
+  /* Light theme — used by the quick dark/light toggle on mobile */
+  html.light {
+    --background: 0 0% 100%;
+    --foreground: 220 14% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 14% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 14% 12%;
+    --primary: 250 80% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 14% 20%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8% 45%;
+    --accent: 250 80% 95%;
+    --accent-foreground: 250 40% 30%;
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 88%;
+    --input: 220 13% 92%;
+    --ring: 250 80% 60%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 14% 12%;
+    --sidebar-active-background: 220 14% 94%;
+    --sidebar-active-foreground: 220 14% 12%;
+    --sidebar-border: 220 13% 88%;
+    --sidebar-toggle-background: 220 14% 92%;
+    --scrollbar-background: 220 10% 80%;
+    --radius: 0.75rem;
+    --shadow-color: 220 13% 80%;
+  }
+
   /* Explicitly apply dark theme variables when html has 'dark' class */
   html.dark {
     --background: 220 10% 8%;
@@ -234,6 +266,11 @@
     padding: 0;
     max-width: 100%;
     overflow-x: hidden; /* Universal guard: never allow horizontal page scroll on mobile */
+  }
+
+  /* Remove the colored tap-flash when touching buttons/links on mobile. */
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
