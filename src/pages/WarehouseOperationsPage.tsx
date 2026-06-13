@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Package, Scan, Truck, CheckCircle, AlertTriangle, LayoutDashboard, Search as SearchIcon, ShoppingCart, ListOrdered, Undo2, MapPin, Repeat } from "lucide-react";
@@ -7,7 +7,6 @@ import WarehouseDashboard from "@/components/warehouse-operations/WarehouseDashb
 import CameraScannerDialog from "@/components/CameraScannerDialog";
 import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/utils/toast";
-import { useNavigate, useLocation } from "react-router-dom";
 import { useProfile } from "@/context/ProfileContext";
 import { useSidebar } from "@/context/SidebarContext";
 
@@ -28,8 +27,6 @@ import PutawayDialog from "@/components/warehouse-operations/dialogs/PutawayDial
 
 const WarehouseOperationsPage: React.FC = () => {
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
-  const location = useLocation();
   const { profile } = useProfile();
   const { isCollapsed: _isCollapsed } = useSidebar();
 
@@ -51,6 +48,9 @@ const WarehouseOperationsPage: React.FC = () => {
   const [isCameraScannerDialogOpen, setIsCameraScannerDialogOpen] = useState(false);
   const [scanCallback, setScanCallback] = useState<((scannedData: string) => void) | null>(null);
   const [scannedDataForTool, setScannedDataForTool] = useState<string | null>(null);
+  // Which operation sheet is open. Plain local state — no routing/effects that
+  // could re-close the sheet the instant it opens.
+  const [openOp, setOpenOp] = useState<string | null>(null);
 
   // Per-operation access. Which dialog is open is derived purely from the URL
   // hash (single source of truth) — no parallel boolean state to fall out of sync.
@@ -85,20 +85,11 @@ const WarehouseOperationsPage: React.FC = () => {
     { value: "issue-report", label: "Report Issue", icon: AlertTriangle, type: "dialog", canAccess: canReportIssues },
   ];
 
-  const openKey = location.hash.replace("#", "");
-  const isDialogOpen = (key: string) => openKey === key && !!accessByKey[key];
-  const isDashboard = !openKey || openKey === "dashboard";
+  const isDialogOpen = (key: string) => openOp === key && !!accessByKey[key];
+  const isDashboard = !openOp;
 
-  // If the hash points to a dialog the user can't access (or an unknown key),
-  // clear it back to the dashboard.
-  const blockedHash = !!openKey && openKey !== "dashboard" && !accessByKey[openKey];
-  useEffect(() => {
-    if (blockedHash) navigate(location.pathname, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blockedHash]);
-
-  const openOperation = (key: string) => navigate(`${location.pathname}#${key}`, { replace: true });
-  const closeDialog = () => navigate(location.pathname, { replace: true });
+  const openOperation = (key: string) => setOpenOp(key);
+  const closeDialog = () => setOpenOp(null);
 
   const requestScan = (callback: (scannedData: string) => void) => {
     setScanCallback(() => callback);
@@ -177,7 +168,7 @@ const WarehouseOperationsPage: React.FC = () => {
 
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-4 p-1 bg-muted rounded-lg overflow-x-auto">
         {operationButtons.map((op) => {
-          const active = op.value === "dashboard" ? isDashboard : openKey === op.value;
+          const active = op.value === "dashboard" ? isDashboard : openOp === op.value;
           return (
             <Button
               key={op.value}
