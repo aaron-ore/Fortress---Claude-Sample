@@ -19,15 +19,25 @@ ALTER TABLE public.recipe_ingredients
   ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now();
 
--- 2) Drop NOT NULL on any legacy column the app does not set (e.g. user_id).
+-- 2) Make any legacy required column the app does NOT populate nullable, so the
+--    insert isn't rejected with a 400 (NOT NULL violation). Covers user_id and
+--    any other app-builder columns we don't know about.
 DO $$
+DECLARE
+  col record;
+  app_cols text[] := ARRAY[
+    'id','recipe_id','organization_id','inventory_item_id','ingredient_name',
+    'quantity','unit_id','unit_name','notes','sort_order','created_at'
+  ];
 BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'recipe_ingredients' AND column_name = 'user_id'
-  ) THEN
-    EXECUTE 'ALTER TABLE public.recipe_ingredients ALTER COLUMN user_id DROP NOT NULL';
-  END IF;
+  FOR col IN
+    SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'recipe_ingredients'
+      AND is_nullable = 'NO' AND column_default IS NULL
+      AND column_name <> ALL(app_cols)
+  LOOP
+    EXECUTE format('ALTER TABLE public.recipe_ingredients ALTER COLUMN %I DROP NOT NULL', col.column_name);
+  END LOOP;
 END $$;
 
 -- 3) Remove EVERY existing policy on the table (clears any leftover restrictive
@@ -61,7 +71,17 @@ CREATE POLICY "Admins and managers can manage recipe ingredients"
     AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'inventory_manager')
   );
 
+-- 5) Reload PostgREST's schema cache so newly added columns are recognized
+--    immediately (a stale cache is itself a cause of 400 Bad Request).
+NOTIFY pgrst, 'reload schema';
+
 -- ── Diagnostic (run separately AFTER trying to create a recipe with ingredients) ──
--- Tells us definitively whether rows are being written:
+-- Confirms whether rows are being written:
 --   SELECT id, recipe_id, ingredient_name, quantity, created_at
 --   FROM public.recipe_ingredients ORDER BY created_at DESC LIMIT 10;
+--
+-- Inspect the table's columns/constraints (shows any legacy required column):
+--   SELECT column_name, data_type, is_nullable, column_default
+--   FROM information_schema.columns
+--   WHERE table_schema='public' AND table_name='recipe_ingredients'
+--   ORDER BY ordinal_position;
