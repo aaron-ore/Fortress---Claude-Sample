@@ -186,6 +186,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         .insert(ingredientRows)
         .select();
       if (ingError) {
+        console.error("recipe_ingredients insert failed:", ingError);
         showError(`Recipe created but failed to save ingredients: ${ingError.message}`);
       } else {
         savedIngredients = (ingData || []).map(mapIngredientRow);
@@ -231,8 +232,17 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       return;
     }
 
+    let savedIngredients: RecipeIngredient[] | undefined;
     if (ingredients !== undefined) {
-      await supabase.from("recipe_ingredients").delete().eq("recipe_id", id);
+      const { error: delErr } = await supabase
+        .from("recipe_ingredients")
+        .delete()
+        .eq("recipe_id", id)
+        .eq("organization_id", profile.organizationId);
+      if (delErr) {
+        console.error("recipe_ingredients delete failed:", delErr);
+        showError(`Failed to update ingredients: ${delErr.message}`);
+      }
       if (ingredients.length > 0) {
         const ingredientRows = ingredients.map((ing, idx) => ({
           recipe_id: id,
@@ -245,11 +255,22 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           notes: ing.notes || null,
           sort_order: ing.sortOrder ?? idx,
         }));
-        await supabase.from("recipe_ingredients").insert(ingredientRows);
+        const { data: ingData, error: ingErr } = await supabase
+          .from("recipe_ingredients")
+          .insert(ingredientRows)
+          .select();
+        if (ingErr) {
+          console.error("recipe_ingredients insert failed:", ingErr);
+          showError(`Failed to save ingredients: ${ingErr.message}`);
+        } else {
+          savedIngredients = (ingData || []).map(mapIngredientRow);
+        }
+      } else {
+        savedIngredients = [];
       }
     }
 
-    setRecipes(prev => prev.map(r => r.id === id ? mapRecipeRow(data) : r));
+    setRecipes(prev => prev.map(r => r.id === id ? { ...mapRecipeRow(data), ingredients: savedIngredients } : r));
     showSuccess(`Recipe "${data.name}" updated.`);
   };
 
