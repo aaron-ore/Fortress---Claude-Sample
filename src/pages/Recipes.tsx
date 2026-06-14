@@ -524,7 +524,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onEdit, onDelete, canMa
 
 // ── Main page ──────────────────────────────────────────────────────────────
 const RecipesPage = () => {
-  const { recipes, isLoading, deleteRecipe, fetchRecipeWithIngredients } = useRecipes();
+  const { recipes, isLoading, deleteRecipe } = useRecipes();
   const { profile } = useProfile();
   const { inventoryFolders } = useOnboarding();
 
@@ -536,8 +536,6 @@ const RecipesPage = () => {
   const [recipeToEdit, setRecipeToEdit] = useState<Recipe | null>(null);
   const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  // Cache full recipes (with ingredients) when expanded
-  const [fullRecipes, setFullRecipes] = useState<Record<string, Recipe>>({});
 
   const restaurantLocations = inventoryFolders.filter(f => f.locationType === 'restaurant');
 
@@ -548,10 +546,9 @@ const RecipesPage = () => {
     return matchesSearch && matchesLocation;
   });
 
-  const handleEdit = async (recipe: Recipe) => {
-    const full = fullRecipes[recipe.id] || await fetchRecipeWithIngredients(recipe.id);
-    if (full) setFullRecipes(prev => ({ ...prev, [recipe.id]: full }));
-    setRecipeToEdit(full || recipe);
+  const handleEdit = (recipe: Recipe) => {
+    // The recipe form fetches the full recipe (with ingredients) on open.
+    setRecipeToEdit(recipe);
     setIsFormOpen(true);
   };
 
@@ -567,7 +564,7 @@ const RecipesPage = () => {
   };
 
   // Attach ingredients to recipes for card display
-  const recipesWithIngredients = filtered.map(r => fullRecipes[r.id] || r);
+  const recipesWithIngredients = filtered;
 
   if (!profile) return null;
 
