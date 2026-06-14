@@ -1,11 +1,10 @@
 -- Fix: recipe ingredients not saving.
--- The app inserts into public.recipe_ingredients but the row can be rejected by
--- the database for one of three reasons depending on how the table was first
--- created (app-builder vs. our migration):
+-- The row is rejected at the database (recipes save with the same RLS, and the
+-- app sends the insert correctly). This idempotent script removes every cause:
 --   1) a column the app writes is missing,
 --   2) a legacy NOT NULL column (e.g. user_id) the app does not populate,
---   3) the RLS "manage" policy has no explicit WITH CHECK for INSERT.
--- This migration is idempotent and addresses all three.
+--   3) a leftover/restrictive RLS policy (from an app-builder) that blocks INSERT,
+--   4) the manage policy lacking an explicit WITH CHECK.
 
 -- 1) Ensure every column the app writes exists.
 ALTER TABLE public.recipe_ingredients
@@ -20,8 +19,7 @@ ALTER TABLE public.recipe_ingredients
   ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now();
 
--- 2) Drop NOT NULL on any legacy columns the app does not set, so inserts
---    aren't rejected (e.g. a user_id column from an earlier schema).
+-- 2) Drop NOT NULL on any legacy column the app does not set (e.g. user_id).
 DO $$
 BEGIN
   IF EXISTS (
@@ -32,15 +30,26 @@ BEGIN
   END IF;
 END $$;
 
--- 3) RLS: explicit WITH CHECK so INSERT/UPDATE are permitted for admins/managers.
+-- 3) Remove EVERY existing policy on the table (clears any leftover restrictive
+--    policy that could be silently blocking inserts).
+DO $$
+DECLARE pol record;
+BEGIN
+  FOR pol IN
+    SELECT policyname FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'recipe_ingredients'
+  LOOP
+    EXECUTE format('DROP POLICY %I ON public.recipe_ingredients', pol.policyname);
+  END LOOP;
+END $$;
+
+-- 4) Recreate clean, permissive policies with an explicit WITH CHECK.
 ALTER TABLE public.recipe_ingredients ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Users can view recipe ingredients in their organization" ON public.recipe_ingredients;
 CREATE POLICY "Users can view recipe ingredients in their organization"
   ON public.recipe_ingredients FOR SELECT
   USING (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid()));
 
-DROP POLICY IF EXISTS "Admins and managers can manage recipe ingredients" ON public.recipe_ingredients;
 CREATE POLICY "Admins and managers can manage recipe ingredients"
   ON public.recipe_ingredients FOR ALL
   USING (
@@ -51,3 +60,8 @@ CREATE POLICY "Admins and managers can manage recipe ingredients"
     organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid())
     AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'inventory_manager')
   );
+
+-- ── Diagnostic (run separately AFTER trying to create a recipe with ingredients) ──
+-- Tells us definitively whether rows are being written:
+--   SELECT id, recipe_id, ingredient_name, quantity, created_at
+--   FROM public.recipe_ingredients ORDER BY created_at DESC LIMIT 10;
