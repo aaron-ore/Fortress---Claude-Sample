@@ -19,9 +19,26 @@ ALTER TABLE public.recipe_ingredients
   ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now();
 
--- 2) Make any legacy required column the app does NOT populate nullable, so the
---    insert isn't rejected with a 400 (NOT NULL violation). Covers user_id and
---    any other app-builder columns we don't know about.
+-- 2a) The app-builder created these as NOT NULL, but the app legitimately sends
+--     NULL: manual ingredients have no inventory_item_id, and ingredients can
+--     have no unit_id. Allow NULL so inserts aren't rejected with a 400.
+ALTER TABLE public.recipe_ingredients ALTER COLUMN inventory_item_id DROP NOT NULL;
+ALTER TABLE public.recipe_ingredients ALTER COLUMN unit_id DROP NOT NULL;
+
+-- 2b) Legacy quantity column the app doesn't write (it uses "quantity").
+--     Make it optional with a default so inserts succeed.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'recipe_ingredients' AND column_name = 'quantity_needed'
+  ) THEN
+    EXECUTE 'ALTER TABLE public.recipe_ingredients ALTER COLUMN quantity_needed DROP NOT NULL';
+    EXECUTE 'ALTER TABLE public.recipe_ingredients ALTER COLUMN quantity_needed SET DEFAULT 0';
+  END IF;
+END $$;
+
+-- 2c) Backstop: make any other unexpected required column (no default) nullable.
 DO $$
 DECLARE
   col record;
