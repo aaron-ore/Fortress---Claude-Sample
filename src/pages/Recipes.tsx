@@ -444,10 +444,29 @@ interface RecipeCardProps {
 
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onEdit, onDelete, canManage }) => {
   const [expanded, setExpanded] = useState(false);
+  const [ings, setIngs] = useState<RecipeIngredient[] | undefined>(recipe.ingredients);
+  const [loadingIngs, setLoadingIngs] = useState(false);
   const { inventoryFolders } = useOnboarding();
+  const { fetchRecipeWithIngredients } = useRecipes();
   const location = recipe.locationId ? inventoryFolders.find(f => f.id === recipe.locationId) : null;
 
   const totalTime = (recipe.prepTimeMinutes || 0) + (recipe.cookTimeMinutes || 0);
+
+  // Keep local copy in sync with the recipe (and re-fetch after an edit).
+  useEffect(() => { setIngs(recipe.ingredients); }, [recipe.id, recipe.updatedAt, recipe.ingredients]);
+
+  const toggleExpand = async () => {
+    const next = !expanded;
+    setExpanded(next);
+    // Ingredients aren't loaded with the recipe list — fetch them from the DB
+    // the first time the card is expanded.
+    if (next && ings === undefined && !loadingIngs) {
+      setLoadingIngs(true);
+      const full = await fetchRecipeWithIngredients(recipe.id);
+      setIngs(full?.ingredients ?? []);
+      setLoadingIngs(false);
+    }
+  };
 
   return (
     <Card className="border-border shadow-sm">
@@ -480,15 +499,17 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onEdit, onDelete, canMa
           {recipe.servingSize && <span>Serves: {recipe.servingSize}</span>}
           {recipe.outputQuantity && <span>Yield: {recipe.outputQuantity}</span>}
         </div>
-        <Button variant="ghost" size="sm" className="text-xs h-7 px-2 w-full justify-start" onClick={() => setExpanded(e => !e)}>
+        <Button variant="ghost" size="sm" className="text-xs h-7 px-2 w-full justify-start" onClick={toggleExpand}>
           {expanded ? <ChevronUp className="h-3.5 w-3.5 mr-1" /> : <ChevronDown className="h-3.5 w-3.5 mr-1" />}
           Ingredients
         </Button>
-        {expanded && recipe.ingredients && (
+        {expanded && (
           <div className="space-y-1 pl-2 border-l-2 border-border">
-            {recipe.ingredients.length === 0 ? (
+            {loadingIngs ? (
+              <p className="text-xs text-muted-foreground">Loading ingredients…</p>
+            ) : !ings || ings.length === 0 ? (
               <p className="text-xs text-muted-foreground">No ingredients yet.</p>
-            ) : recipe.ingredients.map(ing => (
+            ) : ings.map(ing => (
               <div key={ing.id} className="flex items-center justify-between text-xs">
                 <span>{ing.ingredientName}</span>
                 <span className="text-muted-foreground">{ing.quantity} {ing.unitName || ''}</span>

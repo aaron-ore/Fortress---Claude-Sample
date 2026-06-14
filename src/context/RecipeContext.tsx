@@ -167,6 +167,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     const newRecipe = mapRecipeRow(recipeData);
 
+    let savedIngredients: RecipeIngredient[] = [];
     if (ingredients.length > 0) {
       const ingredientRows = ingredients.map((ing, idx) => ({
         recipe_id: newRecipe.id,
@@ -180,15 +181,21 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         sort_order: ing.sortOrder ?? idx,
       }));
 
-      const { error: ingError } = await supabase.from("recipe_ingredients").insert(ingredientRows);
+      const { data: ingData, error: ingError } = await supabase
+        .from("recipe_ingredients")
+        .insert(ingredientRows)
+        .select();
       if (ingError) {
         showError(`Recipe created but failed to save ingredients: ${ingError.message}`);
+      } else {
+        savedIngredients = (ingData || []).map(mapIngredientRow);
       }
     }
 
-    setRecipes(prev => [...prev, newRecipe].sort((a, b) => a.name.localeCompare(b.name)));
+    const recipeWithIngredients: Recipe = { ...newRecipe, ingredients: savedIngredients };
+    setRecipes(prev => [...prev, recipeWithIngredients].sort((a, b) => a.name.localeCompare(b.name)));
     showSuccess(`Recipe "${newRecipe.name}" created.`);
-    return newRecipe;
+    return recipeWithIngredients;
   };
 
   const updateRecipe = async (id: string, updates: Partial<RecipeInput>) => {
