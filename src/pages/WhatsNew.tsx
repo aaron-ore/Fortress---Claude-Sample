@@ -15,6 +15,32 @@ const WhatsNew: React.FC = () => {
   // Mock release notes data
   const releaseNotes: ReleaseNote[] = [
     {
+      version: "2.0.0",
+      date: "2026-06-14",
+      features: [
+        "<strong>Choose your business type:</strong> In Settings you can now set your organization to <strong>Warehouse</strong>, <strong>Restaurant</strong>, or <strong>Retail / Hardware</strong>. The app reshapes itself to fit — the menu, dashboard, and item fields only show what's relevant to how you run.",
+        "<strong>Retail / Hardware mode:</strong> A dedicated home dashboard with the numbers retail cares about — active SKUs, stock value at cost, retail value, projected margin, and low / out-of-stock counts.",
+        "<strong>Quick Scan station:</strong> Scan a product to instantly check stock, receive a delivery (stock in), or sell an item off the shelf (stock out). Works with a USB hand scanner, your phone's camera, or by typing the code.",
+        "<strong>Scan barcodes with your phone camera:</strong> The camera now reads both QR codes and standard product barcodes (UPC / EAN / Code-128) — no extra app needed.",
+        "<strong>Save a product barcode:</strong> Every item can now store its printed UPC / EAN barcode in addition to its QR code, so scanning a real product finds it.",
+        "<strong>Guided Food Cost Variance workflow:</strong> A clear step bar walks you through Import Sales → Map POS Items → Physical Counts → Variance Report, so you always know what's next.",
+        "<strong>Quick dark / light toggle</strong> in the mobile header for comfortable viewing in any lighting.",
+      ],
+      improvements: [
+        "<strong>Faster setup:</strong> New accounts start with a set of common categories, and empty screens now point you to the next step (add your first item, import a CSV, etc.).",
+        "<strong>Cleaner mobile experience:</strong> The top navigation bar now stays in place as you scroll, the page no longer slides sideways into blank space, and large dashboard numbers stay neatly inside their cards (shown as $1.2M instead of overflowing).",
+        "<strong>Tidier header:</strong> Better spacing around the notification bell, and the date/time now shows on desktop while mobile gets the dark-mode toggle in its place.",
+        "<strong>Order Management</strong> tabs no longer overlap on phone screens.",
+        "<strong>Smoother taps:</strong> Removed the stray highlight that appeared when tapping buttons on mobile.",
+      ],
+      bugFixes: [
+        "<strong>Warehouse Operations</strong> tools (Lookup, Receive, Putaway, Cycle Count, etc.) now open reliably — previously they could flash open and immediately close.",
+        "<strong>Recipes:</strong> Ingredients now save correctly when creating a recipe, and the ingredient list scrolls properly so you can add and see as many ingredients as you need.",
+        "<strong>Camera scanning</strong> now reliably reads product barcodes on iPhone.",
+        "The <strong>Create Order</strong> button on inventory items now opens the purchase order screen instead of showing an error.",
+      ],
+    },
+    {
       version: "1.3.0",
       date: "2024-09-01",
       features: [

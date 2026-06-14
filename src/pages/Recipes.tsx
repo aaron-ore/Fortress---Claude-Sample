@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   PlusCircle, Trash2, Edit, Search, Utensils, Clock, ChevronDown, ChevronUp,
   Package, Plus, X, Loader2, AlertTriangle, Ruler
@@ -238,8 +237,11 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ open, onClose, initialRecipe })
 
   const handleSubmit = async () => {
     if (!name.trim()) { showError("Recipe name is required."); return; }
-    if (ingredients.some(i => !i.ingredientName.trim())) {
-      showError("All ingredients must have a name."); return;
+    // Drop blank rows (e.g. the default empty row or an unfilled extra one)
+    // rather than blocking the whole save on them.
+    const validIngredients = ingredients.filter(i => i.ingredientName.trim());
+    if (validIngredients.length === 0) {
+      showError("Add at least one ingredient."); return;
     }
 
     setIsSaving(true);
@@ -256,7 +258,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ open, onClose, initialRecipe })
       outputItemId: outputItemId || undefined,
       notes: notes.trim() || undefined,
       isActive: true,
-      ingredients: ingredients.filter(i => i.ingredientName.trim()).map((i, idx) => ({ ...i, sortOrder: idx })),
+      ingredients: validIngredients.map((i, idx) => ({ ...i, sortOrder: idx })),
     };
 
     if (initialRecipe) {
@@ -392,19 +394,17 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ open, onClose, initialRecipe })
               <span className="col-span-2">Notes</span>
               <span className="col-span-1"></span>
             </div>
-            <ScrollArea className="max-h-60">
-              <div className="space-y-2 pr-1">
-                {ingredients.map((ing, idx) => (
-                  <IngredientRow
-                    key={idx}
-                    ing={ing}
-                    index={idx}
-                    onChange={handleIngredientChange}
-                    onRemove={handleIngredientRemove}
-                  />
-                ))}
-              </div>
-            </ScrollArea>
+            <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+              {ingredients.map((ing, idx) => (
+                <IngredientRow
+                  key={idx}
+                  ing={ing}
+                  index={idx}
+                  onChange={handleIngredientChange}
+                  onRemove={handleIngredientRemove}
+                />
+              ))}
+            </div>
             <Button
               type="button"
               variant="outline"
