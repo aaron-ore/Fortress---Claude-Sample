@@ -14,6 +14,7 @@ export interface StockCount {
   locationId: string | null;
   countDate: string; // YYYY-MM-DD
   note: string | null;
+  salesTotal: number | null; // total food sales for the window ending at this count
   createdAt: string;
 }
 
@@ -32,6 +33,7 @@ interface StockCountContextType {
     lines: StockCountLine[];
   }) => Promise<StockCount | null>;
   fetchCountLines: (stockCountId: string) => Promise<StockCountLine[]>;
+  updateSalesTotal: (id: string, salesTotal: number | null) => Promise<void>;
   deleteStockCount: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -44,6 +46,7 @@ const mapRow = (row: any): StockCount => ({
   locationId: row.location_id || null,
   countDate: row.count_date,
   note: row.note || null,
+  salesTotal: row.sales_total != null ? parseFloat(row.sales_total) : null,
   createdAt: row.created_at,
 });
 
@@ -141,6 +144,22 @@ export const StockCountProvider: React.FC<{ children: ReactNode }> = ({ children
     }));
   }, [profile?.organizationId]);
 
+  const updateSalesTotal = async (id: string, salesTotal: number | null) => {
+    if (!profile?.organizationId) return;
+    const { error } = await supabase
+      .from("stock_counts")
+      .update({ sales_total: salesTotal })
+      .eq("id", id)
+      .eq("organization_id", profile.organizationId);
+    if (error) {
+      console.error("stock_counts sales_total update failed:", error);
+      showError(`Failed to save food sales: ${error.message}`);
+      return;
+    }
+    setStockCounts((prev) => prev.map((c) => (c.id === id ? { ...c, salesTotal } : c)));
+    showSuccess("Food sales saved.");
+  };
+
   const deleteStockCount = async (id: string) => {
     if (!profile?.organizationId) return;
     const { error } = await supabase
@@ -158,7 +177,7 @@ export const StockCountProvider: React.FC<{ children: ReactNode }> = ({ children
 
   return (
     <StockCountContext.Provider
-      value={{ stockCounts, isLoading, createStockCount, fetchCountLines, deleteStockCount, refresh: fetchStockCounts }}
+      value={{ stockCounts, isLoading, createStockCount, fetchCountLines, updateSalesTotal, deleteStockCount, refresh: fetchStockCounts }}
     >
       {children}
     </StockCountContext.Provider>

@@ -142,7 +142,7 @@ const NewCountDialog: React.FC<NewCountDialogProps> = ({ open, onClose }) => {
 
 // ── Main page ───────────────────────────────────────────────────────────────
 const FoodCost = () => {
-  const { stockCounts, isLoading, fetchCountLines, deleteStockCount } = useStockCounts();
+  const { stockCounts, isLoading, fetchCountLines, updateSalesTotal, deleteStockCount } = useStockCounts();
   const { inventoryItems } = useInventory();
   const { inventoryFolders } = useOnboarding();
   const { orders } = useOrders();
@@ -157,6 +157,8 @@ const FoodCost = () => {
   const [toDelete, setToDelete] = useState<string | null>(null);
   const [lines, setLines] = useState<{ curr: StockCountLine[]; prev: StockCountLine[] } | null>(null);
   const [loadingResult, setLoadingResult] = useState(false);
+  const [salesInput, setSalesInput] = useState("");
+  const [savingSales, setSavingSales] = useState(false);
 
   const itemById = useMemo(() => new Map(inventoryItems.map((i) => [i.id, i])), [inventoryItems]);
   const folderName = (id: string | null) => (id ? inventoryFolders.find((f) => f.id === id)?.name || "Location" : "All locations");
@@ -167,6 +169,20 @@ const FoodCost = () => {
   }, [stockCounts, selectedId]);
 
   const selected = stockCounts.find((c) => c.id === selectedId) || null;
+
+  // Keep the sales input in sync with the selected count.
+  useEffect(() => {
+    setSalesInput(selected?.salesTotal != null ? String(selected.salesTotal) : "");
+  }, [selectedId, selected?.salesTotal]);
+
+  const saveSales = async () => {
+    if (!selected) return;
+    const v = salesInput.trim() === "" ? null : parseFloat(salesInput);
+    if (v !== null && (!Number.isFinite(v) || v < 0)) { showError("Enter a valid sales amount."); return; }
+    setSavingSales(true);
+    await updateSalesTotal(selected.id, v);
+    setSavingSales(false);
+  };
   // The "previous" count is the next-older count for the SAME location.
   const previous = useMemo(() => {
     if (!selected) return null;
@@ -330,6 +346,49 @@ const FoodCost = () => {
                         <p className="text-xs text-muted-foreground">On hand now</p>
                       </div>
                     </div>
+
+                    {/* Food cost % — the number owners care about. One input, no mapping. */}
+                    {(() => {
+                      const sales = selected?.salesTotal ?? null;
+                      const pct = sales && sales > 0 ? (result.usageTotal / sales) * 100 : null;
+                      const color = pct == null ? "" : pct <= 32 ? "text-emerald-600" : pct <= 38 ? "text-amber-600" : "text-red-600";
+                      return (
+                        <div className="rounded-lg border p-3 space-y-2 bg-muted/20">
+                          <div className="flex flex-wrap items-end justify-between gap-3">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Food cost %</p>
+                              {pct != null ? (
+                                <p className={`text-3xl font-bold tabular-nums ${color}`}>{pct.toFixed(0)}%</p>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">Enter your food sales to see it →</p>
+                              )}
+                            </div>
+                            <div className="flex items-end gap-2">
+                              <div className="space-y-1">
+                                <Label htmlFor="food-sales" className="text-xs text-muted-foreground">Food sales this period</Label>
+                                <Input
+                                  id="food-sales"
+                                  type="number"
+                                  inputMode="decimal"
+                                  className="w-36 h-9"
+                                  placeholder="e.g. 12500"
+                                  value={salesInput}
+                                  onChange={(e) => setSalesInput(e.target.value)}
+                                />
+                              </div>
+                              <Button size="sm" onClick={saveSales} disabled={savingSales}>
+                                {savingSales ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+                              </Button>
+                            </div>
+                          </div>
+                          {pct != null && (
+                            <p className="text-xs text-muted-foreground">
+                              {money(result.usageTotal)} food used ÷ {money(sales!)} in sales. Most restaurants aim for about 28–35%.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {result.top.length > 0 && (
                       <div>

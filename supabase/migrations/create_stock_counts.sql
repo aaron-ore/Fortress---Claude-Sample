@@ -10,8 +10,13 @@ CREATE TABLE IF NOT EXISTS public.stock_counts (
   location_id UUID REFERENCES public.inventory_folders(id) ON DELETE SET NULL,
   count_date DATE NOT NULL DEFAULT current_date,
   note TEXT,
+  -- Total food sales for the window ending at this count (owner types one number
+  -- from their POS/register summary). Enables food cost % with no item mapping.
+  sales_total NUMERIC(12,2),
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
+-- Safe if the table already existed without the column.
+ALTER TABLE public.stock_counts ADD COLUMN IF NOT EXISTS sales_total NUMERIC(12,2);
 
 CREATE TABLE IF NOT EXISTS public.stock_count_lines (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
