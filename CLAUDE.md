@@ -27,6 +27,25 @@ from `main`.
   fix-all; just don't add *new* ones. Lint is not the gate; tsc is.
 - Before any push: run `tsc`, `vite build`, and `pnpm test`.
 
+## Food Cost (restaurant mode)
+
+Two layers, by design:
+
+- **Simplified (default): `src/pages/FoodCost.tsx`** at `/food-cost`, the single
+  nav item "Food Cost". Built for non-technical owners: periodic **stock counts**
+  that auto-chain (each count is a dated snapshot of on-hand qty — no
+  beginning/ending, no period setup). Usage between two consecutive counts =
+  `previous count + purchases (received POs in the window) − this count`, valued
+  at receipt cost (fallback `unitCost`). Shows plain-language spend/usage/on-hand
+  + top items. Data model: `stock_counts` + `stock_count_lines` tables
+  (`StockCountContext`); SQL in `supabase/migrations/create_stock_counts.sql`.
+- **Advanced (kept, unlinked from main nav): the `/variance*` pages** — the full
+  period + beginning/ending + POS-mapping engine (`src/lib/varianceEngine.ts`,
+  `VariancePeriodContext`, `InventoryCountContext`, sales import/mapping). Still
+  routed and reachable via a link on the Food Cost page; use it for true
+  theoretical (recipe × sales) variance. The engine math is reused conceptually
+  by the simplified page (actual usage = begin + purchases − end).
+
 ## Architecture / conventions
 
 - **Routes live in `src/AppContent.tsx`** (lazy-loaded), not `App.tsx`/`Index.tsx`.

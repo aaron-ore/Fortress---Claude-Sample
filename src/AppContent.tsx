@@ -25,6 +25,7 @@ import { VariancePeriodProvider } from "./context/VariancePeriodContext"; // Var
 import { SalesImportProvider } from "./context/SalesImportContext"; // Variance Finder
 import { PosMappingProvider } from "./context/PosMappingContext"; // Variance Finder
 import { InventoryCountProvider } from "./context/InventoryCountContext"; // Variance Finder
+import { StockCountProvider } from "./context/StockCountContext"; // Simplified Food Cost
 import { PreferencesProvider } from "./context/PreferencesContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PrintWrapper from "./components/PrintWrapper";
@@ -101,6 +102,7 @@ const VarianceSalesImport = lazyWithRetry(() => import("./pages/variance/Varianc
 const VariancePosMapping = lazyWithRetry(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
 const VarianceCounts = lazyWithRetry(() => import("./pages/variance/VarianceCounts")); // Variance Finder
 const VarianceReport = lazyWithRetry(() => import("./pages/variance/VarianceReport")); // Variance Finder
+const FoodCost = lazyWithRetry(() => import("./pages/FoodCost")); // Simplified Food Cost
 
 
 // Fallback component for Suspense
@@ -129,6 +131,7 @@ const AuthenticatedApp = () => {
                           <SalesImportProvider> {/* Variance Finder */}
                           <PosMappingProvider> {/* Variance Finder */}
                           <InventoryCountProvider> {/* Variance Finder */}
+                          <StockCountProvider> {/* Simplified Food Cost */}
                           <AutomationProvider>
                             <Suspense fallback={<LoadingFallback />}>
                               {/* This is the main layout for authenticated users */}
@@ -170,6 +173,7 @@ const AuthenticatedApp = () => {
                                   <Route path="variance/mapping" element={<VariancePosMapping />} /> {/* Variance Finder */}
                                   <Route path="variance/counts" element={<VarianceCounts />} /> {/* Variance Finder */}
                                   <Route path="variance" element={<VarianceReport />} /> {/* Variance Finder */}
+                                  <Route path="food-cost" element={<FoodCost />} /> {/* Simplified Food Cost */}
                                   <Route path="terms-of-service" element={<TermsOfService />} />
                                   <Route path="privacy-policy" element={<PrivacyPolicy />} />
                                   <Route path="refund-policy" element={<RefundPolicy />} />
@@ -178,6 +182,7 @@ const AuthenticatedApp = () => {
                               </Routes>
                             </Suspense>
                           </AutomationProvider>
+                          </StockCountProvider> {/* Simplified Food Cost */}
                           </InventoryCountProvider> {/* Variance Finder */}
                           </PosMappingProvider> {/* Variance Finder */}
                           </SalesImportProvider> {/* Variance Finder */}

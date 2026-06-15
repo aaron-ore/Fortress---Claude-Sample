@@ -17,7 +17,6 @@ import {
   Plug,
   Zap,
   Activity,
-  Upload, // NEW: Import Upload icon
   Utensils, // NEW: Import Utensils icon
   Wrench, // Changed from Tool to Wrench icon for Advanced Tools
   TrendingDown, // Variance Finder
@@ -43,18 +42,11 @@ export interface NavItem {
 export const mainNavItems: NavItem[] = [
   { title: "Dashboard", href: "/home", icon: LayoutDashboard },
   {
-    title: "Food Cost Variance",
-    href: "/variance",
+    title: "Food Cost",
+    href: "/food-cost",
     icon: TrendingDown,
-    isParent: true,
     tag: "NEW",
     modes: ["restaurant"],
-    children: [
-      { title: "Variance Report", href: "/variance", icon: TrendingDown },
-      { title: "Sales Import", href: "/variance/sales-import", icon: Upload },
-      { title: "POS Mapping", href: "/variance/mapping", icon: Plug },
-      { title: "Physical Counts", href: "/variance/counts", icon: Package },
-    ],
   },
   {
     title: "Inventory",
