@@ -13,6 +13,12 @@ import DodoPayments from "npm:dodopayments";
 //   DODO_PRODUCT_ID_PRO_MONTHLY
 //   DODO_PRODUCT_ID_PRO_ANNUAL
 //   SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY (provided by Supabase)
+//
+// Optional:
+//   DODO_FIRST_MONTH_DISCOUNT_CODE - a Dodo discount code (configured in the Dodo
+//     dashboard to reduce the FIRST billing cycle to $1). Auto-applied for
+//     first-time subscribers only (orgs without an existing Dodo customer id).
+//     If unset, customers are simply charged the normal price.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -93,14 +99,20 @@ serve(async (req) => {
     });
 
     // Reuse the existing Dodo customer if we have one; otherwise pass new-customer details.
-    const customer = org?.dodo_customer_id
-      ? { customer_id: org.dodo_customer_id }
-      : { email: profile.email, name: profile.full_name || org?.name || profile.email };
+    const isNewSubscriber = !org?.dodo_customer_id;
+    const customer = isNewSubscriber
+      ? { email: profile.email, name: profile.full_name || org?.name || profile.email }
+      : { customer_id: org.dodo_customer_id };
+
+    // First-month $1 promo: only for first-time subscribers, only if configured.
+    const firstMonthDiscount = Deno.env.get("DODO_FIRST_MONTH_DISCOUNT_CODE")?.trim();
+    const discountCode = isNewSubscriber && firstMonthDiscount ? firstMonthDiscount : undefined;
 
     const session = await client.checkoutSessions.create({
       product_cart: [{ product_id: productId, quantity: 1 }],
       customer,
       return_url: returnUrl || undefined,
+      ...(discountCode ? { discount_code: discountCode } : {}),
       // Echoed back on every webhook so we can reconcile without a lookup.
       metadata: {
         organization_id: String(profile.organization_id),

@@ -23,8 +23,8 @@ interface UpgradePromptDialogProps {
 
 const UpgradePromptDialog: React.FC<UpgradePromptDialogProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { profile, markUpgradePromptSeen, fetchProfile } = useProfile();
-  const [isProcessingTrial, setIsProcessingTrial] = useState(false);
+  const { profile, markUpgradePromptSeen } = useProfile();
+  const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
 
   const handleUpgradeNow = () => {
     markUpgradePromptSeen();
@@ -32,47 +32,37 @@ const UpgradePromptDialog: React.FC<UpgradePromptDialogProps> = ({ isOpen, onClo
     navigate("/billing");
   };
 
-  const handleStartFreeTrial = async (planName: 'standard' | 'pro') => { // Changed from 'standard' | 'premium'
-    if (!profile?.organizationId) {
-      showError("Organization not found. Cannot start trial.");
-      return;
-    }
-    if (!profile?.id) {
-      showError("User not found. Log in again.");
+  // Start a real subscription via Dodo hosted checkout. New subscribers get the
+  // $1-first-month promo applied server-side by the create-dodo-checkout function.
+  const handleGetStarted = async (planId: 'standard' | 'pro') => {
+    if (!profile?.organizationId || !profile?.id) {
+      showError("User or organization not found. Log in again.");
       return;
     }
 
-    setIsProcessingTrial(true);
+    setIsProcessingCheckout(true);
     try {
-      // In a real Dodo integration, you would call a Dodo API to initiate a trial
-      // For now, we'll simulate this and update the profile directly.
-      console.log(`Simulating Dodo trial for plan: ${planName}`);
+      const returnUrl = `${window.location.origin}/billing?dodo_status=success`;
 
-      // Simulate Dodo API call and get a customer ID and subscription ID
-      const simulatedDodoCustomerId = `dodo_cust_${Math.random().toString(36).substring(2, 15)}`;
-      const simulatedDodoSubscriptionId = `dodo_sub_${Math.random().toString(36).substring(2, 15)}`;
+      const { data, error } = await supabase.functions.invoke('create-dodo-checkout', {
+        body: JSON.stringify({ planId, billingCycle: 'monthly', returnUrl }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
 
-      // Update the organization with Dodo customer and subscription IDs
-      await supabase
-        .from('organizations')
-        .update({
-          dodo_customer_id: simulatedDodoCustomerId,
-          dodo_subscription_id: simulatedDodoSubscriptionId,
-          plan: planName,
-          // For Dodo, trial_ends_at would be managed by Dodo's API and webhook
-          // For now, we'll set a mock trial end date.
-          trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14-day free trial
-        })
-        .eq('id', profile.organizationId);
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.checkout_url) throw new Error("No checkout URL returned. Please try again.");
 
-      showSuccess(`14-Day Free Trial for ${planName} plan started (simulated)!`);
-      onClose();
+      // Hand off to Dodo's hosted checkout; the dodo-webhook locks in the plan on success.
+      markUpgradePromptSeen();
+      window.location.href = data.checkout_url;
     } catch (error: any) {
-      console.error("Error starting free trial (simulated):", error);
-      showError(`Failed to start free trial: ${error.message}`);
-    } finally {
-      setIsProcessingTrial(false);
-      await fetchProfile(); // Refresh profile to reflect trial status
+      console.error("Error starting checkout:", error);
+      showError(`Failed to start checkout: ${error.message}`);
+      setIsProcessingCheckout(false);
     }
   };
 
@@ -89,35 +79,34 @@ const UpgradePromptDialog: React.FC<UpgradePromptDialogProps> = ({ isOpen, onClo
           <Sparkles className="h-12 w-12 text-primary mx-auto mb-4" />
           <DialogTitle className="text-2xl font-bold">Unlock More Power with Fortress!</DialogTitle>
           <DialogDescription>
-            You're currently on the Free plan. Upgrade or start a free trial to access advanced features and streamline your operations even further.
+            You're currently on the Free plan. Get the Standard plan for just <span className="font-semibold text-foreground">$1 for your first month</span> to access advanced features and streamline your operations.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <Button onClick={handleUpgradeNow} className="w-full">
-            <Crown className="h-4 w-4 mr-2" /> Upgrade Now
-          </Button>
           <Button
-            variant="secondary"
-            onClick={() => handleStartFreeTrial('standard')} // Default to Standard plan for trial
-            disabled={isProcessingTrial}
+            onClick={() => handleGetStarted('standard')}
+            disabled={isProcessingCheckout}
             className="w-full"
           >
-            {isProcessingTrial ? (
+            {isProcessingCheckout ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Starting Trial...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Starting checkout...
               </>
             ) : (
               <>
-                <ArrowRight className="h-4 w-4 mr-2" /> Start 14-Day Free Trial (Standard)
+                <ArrowRight className="h-4 w-4 mr-2" /> Get Standard — $1 First Month
               </>
             )}
           </Button>
-          <Button variant="ghost" onClick={handleContinueWithFreePlan} className="w-full text-muted-foreground hover:text-foreground">
+          <Button variant="secondary" onClick={handleUpgradeNow} disabled={isProcessingCheckout} className="w-full">
+            <Crown className="h-4 w-4 mr-2" /> See all plans
+          </Button>
+          <Button variant="ghost" onClick={handleContinueWithFreePlan} disabled={isProcessingCheckout} className="w-full text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4 mr-2" /> Continue with Free Plan
           </Button>
         </div>
         <DialogFooter className="text-xs text-muted-foreground text-center">
-          Your trial will automatically convert to a paid subscription after 14 days unless cancelled.
+          $1 for the first month, then the standard monthly rate. Cancel anytime.
         </DialogFooter>
       </DialogContent>
     </Dialog>
