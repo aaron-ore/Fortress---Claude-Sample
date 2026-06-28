@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { PlusCircle, List, LayoutGrid, PackagePlus, Upload, Repeat, Scan as ScanIcon, ChevronDown, Loader2, Eye, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, List, LayoutGrid, PackagePlus, Upload, Repeat, Scan as ScanIcon, ChevronDown, Loader2, Eye, Edit, Trash2, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -366,12 +366,25 @@ const Inventory: React.FC = () => {
       <h1 className="text-3xl font-bold">Inventory Management</h1>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Input
-          placeholder="Search by name, SKU, or description..."
-          className="flex-grow max-w-xs"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+        <div className="relative flex-grow max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search all items by name, SKU, or vendor..."
+            className="pl-8 pr-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => setSearchTerm("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Categories" />
@@ -482,34 +495,28 @@ const Inventory: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Top-level Folders Display */}
-              {topLevelFolders.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {topLevelFolders.map((folder: InventoryFolder) => {
-                    const { itemCount, subfolderCount } = getFolderItemCounts(folder.id);
-                    return (
-                      <FolderCard
-                        key={folder.id}
-                        folder={folder}
-                        onEdit={handleEditFolderClick}
-                        onDelete={handleDeleteFolderClick}
-                        itemCount={itemCount}
-                        subfolderCount={subfolderCount}
-                        canManageFolders={canManageFolders} // NEW: Pass permission
-                      />
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* All Items (if no specific folder is selected, or for global search) */}
-              {searchTerm && filteredItems.length > 0 ? (
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold mb-4">Search Results ({filteredItems.length})</h2>
-                  {viewMode === "table" && (
+              {searchTerm ? (
+                /* SEARCH MODE: show matching items across every folder — no digging. */
+                <div>
+                  <div className="flex items-center justify-between mb-4 gap-2">
+                    <h2 className="text-xl font-semibold">
+                      Search results ({filteredItems.length})
+                      <span className="ml-2 text-sm font-normal text-muted-foreground">for “{searchTerm}”</span>
+                    </h2>
+                    <Button variant="ghost" size="sm" onClick={() => setSearchTerm("")}>
+                      <X className="h-4 w-4 mr-1.5" /> Clear
+                    </Button>
+                  </div>
+                  {filteredItems.length === 0 ? (
+                    <div className="text-center py-12 space-y-2">
+                      <Search className="h-10 w-10 mx-auto text-muted-foreground/40" />
+                      <p className="text-muted-foreground">
+                        No items match “{searchTerm}”. Try a different name, SKU, category, or vendor.
+                      </p>
+                    </div>
+                  ) : viewMode === "table" ? (
                     <DataTable columns={columnsForDataTable} data={filteredItems} />
-                  )}
-                  {viewMode === "card" && (
+                  ) : (
                     <InventoryCardGrid
                       items={filteredItems}
                       onAdjustStock={handleQuickView}
@@ -521,30 +528,50 @@ const Inventory: React.FC = () => {
                   )}
                 </div>
               ) : (
-                !searchTerm && topLevelFolders.length === 0 && (
-                  <div className="text-center py-12 space-y-4">
-                    <PackagePlus className="h-12 w-12 mx-auto text-muted-foreground/40" />
-                    <div>
-                      <p className="text-lg font-medium">Your inventory is empty</p>
-                      <p className="text-muted-foreground text-sm max-w-md mx-auto mt-1">
-                        Start by creating a folder for a storage area (walk-in, freezer, dry storage), then add items to it — one at a time or all at once from a CSV.
-                      </p>
+                /* BROWSE MODE: folders (or the empty state). */
+                <>
+                  {topLevelFolders.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                      {topLevelFolders.map((folder: InventoryFolder) => {
+                        const { itemCount, subfolderCount } = getFolderItemCounts(folder.id);
+                        return (
+                          <FolderCard
+                            key={folder.id}
+                            folder={folder}
+                            onEdit={handleEditFolderClick}
+                            onDelete={handleDeleteFolderClick}
+                            itemCount={itemCount}
+                            subfolderCount={subfolderCount}
+                            canManageFolders={canManageFolders} // NEW: Pass permission
+                          />
+                        );
+                      })}
                     </div>
-                    {canManageInventory && (
-                      <div className="flex flex-wrap justify-center gap-2">
-                        <Button onClick={handleAddFolderClick}>
-                          <PlusCircle className="h-4 w-4 mr-2" /> Create First Folder
-                        </Button>
-                        <Button variant="outline" onClick={() => setIsAddInventoryDialogOpen(true)}>
-                          <PlusCircle className="h-4 w-4 mr-2" /> Add an Item
-                        </Button>
-                        <Button variant="outline" onClick={() => setIsImportCsvDialogOpen(true)}>
-                          <Upload className="h-4 w-4 mr-2" /> Import from CSV
-                        </Button>
+                  ) : (
+                    <div className="text-center py-12 space-y-4">
+                      <PackagePlus className="h-12 w-12 mx-auto text-muted-foreground/40" />
+                      <div>
+                        <p className="text-lg font-medium">Your inventory is empty</p>
+                        <p className="text-muted-foreground text-sm max-w-md mx-auto mt-1">
+                          Start by creating a folder for a storage area (walk-in, freezer, dry storage), then add items to it — one at a time or all at once from a CSV.
+                        </p>
                       </div>
-                    )}
-                  </div>
-                )
+                      {canManageInventory && (
+                        <div className="flex flex-wrap justify-center gap-2">
+                          <Button onClick={handleAddFolderClick}>
+                            <PlusCircle className="h-4 w-4 mr-2" /> Create First Folder
+                          </Button>
+                          <Button variant="outline" onClick={() => setIsAddInventoryDialogOpen(true)}>
+                            <PlusCircle className="h-4 w-4 mr-2" /> Add an Item
+                          </Button>
+                          <Button variant="outline" onClick={() => setIsImportCsvDialogOpen(true)}>
+                            <Upload className="h-4 w-4 mr-2" /> Import from CSV
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
