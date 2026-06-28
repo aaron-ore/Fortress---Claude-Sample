@@ -385,6 +385,13 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       await logActivity("Update Inventory Item Failed", `Failed to update inventory item: ${updatedItem.name} (SKU: ${updatedItem.sku}).`, profile, { error_message: error.message, item_id: updatedItem.id, item_name: updatedItem.name, sku: updatedItem.sku, updated_fields: updatedItem }, true);
       showError(`Failed to update item: ${error.message}`);
     } else if (data && data.length > 0) {
+      // Update local state immediately so the UI reflects the change without
+      // depending on the realtime subscription (which may not be enabled for
+      // this table). Quantity adjustments from Quick Scan rely on this.
+      const updated = mapSupabaseItemToInventoryItem(data[0]);
+      setInventoryItems((prev) =>
+        prev.map((i) => (i.id === updated.id ? updated : i)).sort((a, b) => a.name.localeCompare(b.name)),
+      );
       showSuccess(`Item updated: ${data[0].name}.`);
       await logActivity("Update Inventory Item Success", `Updated inventory item: ${data[0].name} (SKU: ${data[0].sku}).`, profile, { item_id: data[0].id, item_name: data[0].name, sku: data[0].sku, updated_fields: updatedItem });
     } else {
