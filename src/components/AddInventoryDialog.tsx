@@ -29,7 +29,17 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import CustomFileInput from "@/components/CustomFileInput";
 import BarcodePreview from "@/components/BarcodePreview";
 import { uploadFileToSupabase } from "@/integrations/supabase/storage";
-import { Loader2 } from "lucide-react"; // Import Loader2 for the spinner
+import { Loader2, AlertTriangle } from "lucide-react"; // Import Loader2 for the spinner
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 interface AddInventoryDialogProps {
@@ -45,7 +55,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   initialFolderId, // NEW: Destructure initialFolderId
   initialSku,
 }) => {
-  const { addInventoryItem } = useInventory();
+  const { addInventoryItem, inventoryItems } = useInventory();
   const { inventoryFolders } = useOnboarding(); // Updated to inventoryFolders
   const { categories } = useCategories();
   const { vendors } = useVendors();
@@ -86,6 +96,12 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
   const [autoReorderEnabled, setAutoReorderEnabled] = useState(false); // State for auto-reorder switch
   const [autoReorderQuantity, setAutoReorderQuantity] = useState(""); // State for auto-reorder quantity
 
+  // Duplicate-detection warning (name / SKU / barcode, case-insensitive)
+  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
+  const [duplicateConflicts, setDuplicateConflicts] = useState<
+    { field: string; value: string; itemName: string }[]
+  >([]);
+
   useEffect(() => {
     if (isOpen) {
       setViewMode("simple");
@@ -114,6 +130,8 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       setAutoReorderEnabled(false);
       setAutoReorderQuantity("");
       setIsAddingItem(false); // Reset loading state
+      setIsDuplicateDialogOpen(false);
+      setDuplicateConflicts([]);
     }
   }, [isOpen, inventoryFolders, initialFolderId, initialSku]); // Added initialFolderId to dependencies
 
@@ -179,7 +197,28 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     console.log("[AddInventoryDialog] handleClearImage: Image explicitly cleared. imageUrlPreview set to null.");
   };
 
-  const handleSubmit = async () => {
+  // Find existing items that collide on name / SKU / barcode (case-insensitive,
+  // trimmed). Returns at most one conflict per field, with the existing item's name.
+  const detectDuplicates = () => {
+    const n = itemName.trim().toLowerCase();
+    const s = sku.trim().toLowerCase();
+    const b = barcode.trim().toLowerCase();
+    const found: Record<string, { field: string; value: string; itemName: string }> = {};
+    for (const item of inventoryItems) {
+      if (n && !found.Name && item.name?.trim().toLowerCase() === n) {
+        found.Name = { field: "Name", value: itemName.trim(), itemName: item.name };
+      }
+      if (s && !found.SKU && item.sku?.trim().toLowerCase() === s) {
+        found.SKU = { field: "SKU", value: sku.trim(), itemName: item.name };
+      }
+      if (b && !found.Barcode && item.barcode?.trim().toLowerCase() === b) {
+        found.Barcode = { field: "Barcode", value: barcode.trim(), itemName: item.name };
+      }
+    }
+    return Object.values(found);
+  };
+
+  const handleSubmit = async (skipDuplicateCheck = false) => {
     if (!canManageInventory) { // NEW: Check permission before submitting
       showError("No permission to add items.");
       return;
@@ -246,6 +285,19 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
       showError("Org ID not found.");
       setIsAddingItem(false); // Reset loading state
       return;
+    }
+
+    // Warn on duplicate name / SKU / barcode against items already loaded.
+    // SKU & barcode are identity fields → hard block; a name-only match is a
+    // soft warning the user can override via "Add Anyway".
+    if (!skipDuplicateCheck) {
+      const conflicts = detectDuplicates();
+      if (conflicts.length > 0) {
+        setDuplicateConflicts(conflicts);
+        setIsDuplicateDialogOpen(true);
+        setIsAddingItem(false);
+        return;
+      }
     }
 
     // Only check for duplicates when a SKU was actually entered. Restaurant items
@@ -379,7 +431,16 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     onClose();
   };
 
+  // SKU / barcode are unique identity fields → can't override.
+  const hasHardConflict = duplicateConflicts.some(
+    (c) => c.field === "SKU" || c.field === "Barcode",
+  );
+  const duplicateFieldLabel = duplicateConflicts
+    .map((c) => c.field.toLowerCase())
+    .join(", ");
+
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={(o) => { if (!o) attemptClose(); }}>
       <DialogContent
         className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto"
@@ -790,7 +851,7 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
           <Button variant="outline" onClick={attemptClose} disabled={isAddingItem}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isFormInvalid}>
+          <Button onClick={() => handleSubmit()} disabled={isFormInvalid}>
             {isAddingItem ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...
@@ -802,6 +863,48 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Red duplicate-detected warning popup */}
+    <AlertDialog open={isDuplicateDialogOpen} onOpenChange={setIsDuplicateDialogOpen}>
+      <AlertDialogContent className="border-2 border-destructive">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" /> Duplicate item detected
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            An item with the same {duplicateFieldLabel} already exists in your inventory:
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <ul className="list-disc list-inside space-y-1 text-sm">
+          {duplicateConflicts.map((c) => (
+            <li key={c.field}>
+              <span className="font-semibold text-destructive">{c.field}</span>{" "}
+              “{c.value}” matches existing item{" "}
+              <span className="font-semibold">{c.itemName}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-sm text-muted-foreground">
+          {hasHardConflict
+            ? "SKU and barcode must be unique. Please change them before adding this item."
+            : "If this is intentional, you can add it anyway."}
+        </p>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setIsDuplicateDialogOpen(false)}>
+            Go Back & Edit
+          </AlertDialogCancel>
+          {!hasHardConflict && (
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { setIsDuplicateDialogOpen(false); handleSubmit(true); }}
+            >
+              Add Anyway
+            </AlertDialogAction>
+          )}
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };
 
