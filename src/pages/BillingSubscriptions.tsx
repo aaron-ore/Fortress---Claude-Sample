@@ -36,6 +36,9 @@ import React, { useState, useEffect } from "react";
       const [isManagingSubscription, setIsManagingSubscription] = useState(false);
 
       const currentPlanId = profile?.companyProfile?.plan || "free";
+      // New subscribers (no Dodo customer yet) get the Standard monthly $1-first-month
+      // promo — mirrors the gate in the create-dodo-checkout edge function.
+      const isNewSubscriber = !profile?.dodoCustomerId;
 
       useEffect(() => {
         const fetchPlans = async () => {
@@ -245,6 +248,13 @@ import React, { useState, useEffect } from "react";
                     {getPriceDisplay(plan).split('/')[0]}
                     <span className="text-lg font-medium text-muted-foreground">/{getPriceDisplay(plan).split('/')[1]}</span>
                   </div>
+                  {plan.id === "standard" && billingCycle === "monthly" && isNewSubscriber && (
+                    <div className="mt-2 flex justify-center">
+                      <Badge className="bg-green-500 hover:bg-green-500 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" /> $1 for your first month
+                      </Badge>
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col justify-between p-6 pt-0">
                   <ul className="space-y-2 text-sm text-muted-foreground mb-6">

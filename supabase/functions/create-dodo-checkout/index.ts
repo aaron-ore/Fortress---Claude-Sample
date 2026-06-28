@@ -16,9 +16,11 @@ import DodoPayments from "npm:dodopayments";
 //
 // Optional:
 //   DODO_FIRST_MONTH_DISCOUNT_CODE - a Dodo discount code (configured in the Dodo
-//     dashboard to reduce the FIRST billing cycle to $1). Auto-applied for
-//     first-time subscribers only (orgs without an existing Dodo customer id).
-//     If unset, customers are simply charged the normal price.
+//     dashboard to reduce the FIRST billing cycle of the STANDARD product to $1).
+//     Auto-applied only for first-time subscribers (orgs without an existing Dodo
+//     customer id) choosing the Standard plan. If unset, customers are simply
+//     charged the normal price. Pro stays full price (the $1 promo is a Standard
+//     starter hook; a single fixed-value code can't net $1 on two prices).
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,9 +106,13 @@ serve(async (req) => {
       ? { email: profile.email, name: profile.full_name || org?.name || profile.email }
       : { customer_id: org.dodo_customer_id };
 
-    // First-month $1 promo: only for first-time subscribers, only if configured.
+    // First-month $1 promo: first-time subscribers on the Standard MONTHLY plan
+    // only, and only if a discount code is configured.
     const firstMonthDiscount = Deno.env.get("DODO_FIRST_MONTH_DISCOUNT_CODE")?.trim();
-    const discountCode = isNewSubscriber && firstMonthDiscount ? firstMonthDiscount : undefined;
+    const discountCode =
+      isNewSubscriber && planId.toLowerCase() === "standard" && cycle === "monthly" && firstMonthDiscount
+        ? firstMonthDiscount
+        : undefined;
 
     const session = await client.checkoutSessions.create({
       product_cart: [{ product_id: productId, quantity: 1 }],
