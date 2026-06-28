@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { PlusCircle, List, LayoutGrid, PackagePlus, Upload, Repeat, Scan as ScanIcon, ChevronDown, Loader2, Eye, Edit, Trash2, Search, X } from "lucide-react";
+import { PlusCircle, List, LayoutGrid, PackagePlus, Upload, Download, Repeat, Scan as ScanIcon, ChevronDown, Loader2, Eye, Edit, Trash2, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -43,6 +43,7 @@ import { useSidebar } from "@/context/SidebarContext";
 import FolderCard from "@/components/inventory/FolderCard";
 import FolderLabelGenerator from "@/components/FolderLabelGenerator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { exportInventoryToCsv } from "@/utils/csvGenerator";
 
 
 export const createInventoryColumns = (
@@ -287,6 +288,15 @@ const Inventory: React.FC = () => {
     navigate(`/folders/${folderId}`);
   }, [navigate]);
 
+  // Export the current scope: the filtered/search results when a search or
+  // filter is active, otherwise every item across all folders.
+  const isScopeFiltered = searchTerm !== "" || categoryFilter !== "all" || statusFilter !== "all";
+  const handleExportCsv = useCallback(() => {
+    const itemsToExport = isScopeFiltered ? filteredItems : inventoryItems;
+    const stamp = new Date().toISOString().slice(0, 10);
+    exportInventoryToCsv(itemsToExport, inventoryFolders, `inventory-${stamp}`);
+  }, [isScopeFiltered, filteredItems, inventoryItems, inventoryFolders]);
+
   const columnsForDataTable = useMemo(() => createInventoryColumns(
     handleQuickView,
     inventoryFolders,
@@ -446,6 +456,16 @@ const Inventory: React.FC = () => {
         <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-xl font-semibold">Inventory Overview</CardTitle>
           <div className="flex items-center space-x-2 flex-wrap gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" onClick={handleExportCsv} size="sm">
+                  <Download className="h-4 w-4 mr-2" /> Export CSV
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isScopeFiltered ? "Export the current results" : "Export all items (across every folder & subfolder)"}</p>
+              </TooltipContent>
+            </Tooltip>
             {canManageFolders && (
               <Button onClick={handleAddFolderClick} size="sm">
                 <PlusCircle className="h-4 w-4 mr-2" /> Add New Folder

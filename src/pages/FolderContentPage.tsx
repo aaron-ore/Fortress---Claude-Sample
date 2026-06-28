@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { List, LayoutGrid, Folder, Loader2, AlertTriangle, PlusCircle } from "lucide-react";
+import { List, LayoutGrid, Folder, Loader2, AlertTriangle, PlusCircle, Download } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import { useInventory, InventoryItem } from "@/context/InventoryContext";
 import { useOnboarding, InventoryFolder } from "@/context/OnboardingContext";
@@ -19,6 +19,7 @@ import FolderLabelGenerator from "@/components/FolderLabelGenerator"; // Import 
 import AddInventoryDialog from "@/components/AddInventoryDialog"; // Import AddInventoryDialog
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useProfile } from "@/context/ProfileContext"; // Corrected import
+import { exportInventoryToCsv } from "@/utils/csvGenerator";
 
 const FolderContentPage: React.FC = () => {
   const { folderId } = useParams<{ folderId: string }>();
@@ -83,6 +84,23 @@ const FolderContentPage: React.FC = () => {
     const subfoldersIn = inventoryFolders.filter(folder => folder.parentId === fId);
     return { itemCount: items.length, subfolderCount: subfoldersIn.length };
   }, [inventoryItems, inventoryFolders]);
+
+  // Collect every item in this folder and all nested subfolders.
+  const getItemsInFolderRecursive = useCallback((fId: string): InventoryItem[] => {
+    let items = inventoryItems.filter(item => item.folderId === fId);
+    for (const sub of inventoryFolders.filter(folder => folder.parentId === fId)) {
+      items = items.concat(getItemsInFolderRecursive(sub.id));
+    }
+    return items;
+  }, [inventoryItems, inventoryFolders]);
+
+  const handleExportFolderCsv = useCallback(() => {
+    if (!currentFolder) return;
+    const items = getItemsInFolderRecursive(currentFolder.id);
+    const stamp = new Date().toISOString().slice(0, 10);
+    const safeName = currentFolder.name.replace(/[^a-z0-9-_]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "folder";
+    exportInventoryToCsv(items, inventoryFolders, `inventory-${safeName}-${stamp}`);
+  }, [currentFolder, getItemsInFolderRecursive, inventoryFolders]);
 
   const handleQuickView = useCallback((item: InventoryItem) => {
     setSelectedItemForQuickView(item);
@@ -285,6 +303,16 @@ const FolderContentPage: React.FC = () => {
         <CardHeader className="pb-4 flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-xl font-semibold">Items & Subfolders ({subfolders.length + filteredItems.length})</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" onClick={handleExportFolderCsv}>
+                  <Download className="h-4 w-4 mr-2" /> Export CSV
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Export this folder and all its subfolders to CSV</p>
+              </TooltipContent>
+            </Tooltip>
             {canManageFolders && (
               <Button onClick={handleAddSubfolderClick}>
                 <PlusCircle className="h-4 w-4 mr-2" /> Add Subfolder
