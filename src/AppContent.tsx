@@ -19,6 +19,8 @@ import { StockMovementProvider } from "./context/StockMovementContext";
 import { ReplenishmentProvider } from "./context/ReplenishmentContext";
 import { InventoryProvider } from "./context/InventoryContext";
 import { InventoryUnitsProvider } from "./context/InventoryUnitsContext"; // Warehouse serialized units
+import { PartnersProvider } from "./context/PartnersContext"; // Warehouse partners (ISO/ISV)
+import { MerchantsProvider } from "./context/MerchantsContext"; // Warehouse merchants
 import { AutomationProvider } from "./context/AutomationContext";
 import { UnitOfMeasureProvider } from "./context/UnitOfMeasureContext"; // NEW: Import UnitOfMeasureProvider
 import { RecipeProvider } from "./context/RecipeContext"; // NEW: Import RecipeProvider
@@ -101,6 +103,8 @@ const UnitsOfMeasure = lazyWithRetry(() => import("./pages/UnitsOfMeasure"));
 const QuickScanPage = lazyWithRetry(() => import("./pages/QuickScanPage"));
 const BulkIntakePage = lazyWithRetry(() => import("./pages/BulkIntakePage")); // Warehouse serialized intake
 const DevicesPage = lazyWithRetry(() => import("./pages/DevicesPage")); // Warehouse serialized units list
+const PartnersMerchantsPage = lazyWithRetry(() => import("./pages/PartnersMerchantsPage")); // Warehouse merchants & partners
+const AllocatePage = lazyWithRetry(() => import("./pages/AllocatePage")); // Warehouse allocation workflow
 const VarianceSalesImport = lazyWithRetry(() => import("./pages/variance/VarianceSalesImport")); // Variance Finder
 const VariancePosMapping = lazyWithRetry(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
 const VarianceCounts = lazyWithRetry(() => import("./pages/variance/VarianceCounts")); // Variance Finder
@@ -129,6 +133,8 @@ const AuthenticatedApp = () => {
                   <ReplenishmentProvider>
                     <InventoryProvider>
                       <InventoryUnitsProvider> {/* Warehouse serialized units */}
+                      <PartnersProvider> {/* Warehouse partners */}
+                      <MerchantsProvider> {/* Warehouse merchants */}
                       <UnitOfMeasureProvider> {/* NEW: UnitOfMeasureProvider */}
                         <RecipeProvider> {/* NEW: RecipeProvider */}
                           <VariancePeriodProvider> {/* Variance Finder */}
@@ -148,6 +154,8 @@ const AuthenticatedApp = () => {
                                   <Route path="quick-scan" element={<QuickScanPage />} />
                                   <Route path="bulk-intake" element={<BulkIntakePage />} />
                                   <Route path="devices" element={<DevicesPage />} />
+                                  <Route path="partners-merchants" element={<PartnersMerchantsPage />} />
+                                  <Route path="allocate" element={<AllocatePage />} />
                                   <Route path="inventory/:id" element={<EditInventoryItem />} />
                                   <Route path="inventory/:id/history" element={<ItemHistoryPage />} />
                                   <Route path="orders" element={<Orders />} />
@@ -195,6 +203,8 @@ const AuthenticatedApp = () => {
                           </VariancePeriodProvider> {/* Variance Finder */}
                         </RecipeProvider> {/* NEW: RecipeProvider */}
                       </UnitOfMeasureProvider> {/* NEW: UnitOfMeasureProvider */}
+                      </MerchantsProvider> {/* Warehouse merchants */}
+                      </PartnersProvider> {/* Warehouse partners */}
                       </InventoryUnitsProvider> {/* Warehouse serialized units */}
                     </InventoryProvider>
                   </ReplenishmentProvider>

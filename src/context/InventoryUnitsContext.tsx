@@ -40,6 +40,8 @@ interface InventoryUnitsContextType {
   /** Bulk-insert a batch of serialized units. Throws on failure so the caller can surface it. */
   addUnitsBatch: (units: NewUnitInput[]) => Promise<InventoryUnit[]>;
   updateUnitStatus: (unitId: string, status: UnitStatus) => Promise<void>;
+  /** Assign a set of units to a merchant and mark them 'allocated'. */
+  allocateUnits: (unitIds: string[], merchantId: string) => Promise<number>;
   deleteUnit: (unitId: string) => Promise<void>;
 }
 
@@ -162,6 +164,35 @@ export const InventoryUnitsProvider: React.FC<{ children: ReactNode }> = ({ chil
     }
   };
 
+  const allocateUnits = async (unitIds: string[], merchantId: string): Promise<number> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || !profile?.organizationId) {
+      const msg = "Login/org ID required.";
+      showError(msg);
+      throw new Error(msg);
+    }
+    if (unitIds.length === 0) return 0;
+
+    const { data, error } = await supabase
+      .from("inventory_units")
+      .update({ merchant_id: merchantId, unit_status: "allocated" })
+      .in("id", unitIds)
+      .eq("organization_id", profile.organizationId)
+      .select();
+
+    if (error) {
+      console.error("Error allocating units:", error);
+      await logActivity("Allocation Failed", `Failed to allocate ${unitIds.length} unit(s).`, profile, { error_message: error.message }, true);
+      throw new Error(error.message);
+    }
+
+    const updated = (data || []).map(mapRow);
+    const updatedById = new Map(updated.map((u) => [u.id, u]));
+    setUnits((prev) => prev.map((u) => updatedById.get(u.id) ?? u));
+    await logActivity("Allocation Success", `Allocated ${updated.length} unit(s) to merchant ${merchantId}.`, profile, { count: updated.length, merchant_id: merchantId });
+    return updated.length;
+  };
+
   const deleteUnit = async (unitId: string) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session || !profile?.organizationId) {
@@ -186,7 +217,7 @@ export const InventoryUnitsProvider: React.FC<{ children: ReactNode }> = ({ chil
 
   return (
     <InventoryUnitsContext.Provider
-      value={{ units, isLoadingUnits, refreshUnits: fetchUnits, addUnitsBatch, updateUnitStatus, deleteUnit }}
+      value={{ units, isLoadingUnits, refreshUnits: fetchUnits, addUnitsBatch, updateUnitStatus, allocateUnits, deleteUnit }}
     >
       {children}
     </InventoryUnitsContext.Provider>
