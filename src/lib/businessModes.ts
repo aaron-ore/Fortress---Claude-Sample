@@ -36,11 +36,12 @@ export type ModeFeature =
   | "usageUnits"     // Per-item usage unit, used by recipes & variance (restaurant)
   | "warehouseOps"   // Warehouse Operations tools: picking, putaway, shipping (warehouse)
   | "pickingBins"    // Split picking-bin / overstock quantities on items (warehouse)
+  | "serialUnits"    // Serialized per-unit tracking: bulk intake, unit statuses (warehouse)
   | "margin"         // Margin / markup analytics (retail)
   | "serialTracking"; // Serial / lot tracking (retail/hardware) — Phase 2 data model
 
 const FEATURES_BY_MODE: Record<BusinessMode, ModeFeature[]> = {
-  warehouse: ["warehouseOps", "pickingBins"],
+  warehouse: ["warehouseOps", "pickingBins", "serialUnits"],
   restaurant: ["foodVariance", "recipes", "usageUnits"],
   retail: ["margin", "serialTracking"],
 };

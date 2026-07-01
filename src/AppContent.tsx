@@ -18,6 +18,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { StockMovementProvider } from "./context/StockMovementContext";
 import { ReplenishmentProvider } from "./context/ReplenishmentContext";
 import { InventoryProvider } from "./context/InventoryContext";
+import { InventoryUnitsProvider } from "./context/InventoryUnitsContext"; // Warehouse serialized units
 import { AutomationProvider } from "./context/AutomationContext";
 import { UnitOfMeasureProvider } from "./context/UnitOfMeasureContext"; // NEW: Import UnitOfMeasureProvider
 import { RecipeProvider } from "./context/RecipeContext"; // NEW: Import RecipeProvider
@@ -98,6 +99,7 @@ const RefundPolicy = lazyWithRetry(() => import("./pages/RefundPolicy"));
 const Recipes = lazyWithRetry(() => import("./pages/Recipes")); // NEW: Lazy import for Recipes
 const UnitsOfMeasure = lazyWithRetry(() => import("./pages/UnitsOfMeasure"));
 const QuickScanPage = lazyWithRetry(() => import("./pages/QuickScanPage"));
+const BulkIntakePage = lazyWithRetry(() => import("./pages/BulkIntakePage")); // Warehouse serialized intake
 const VarianceSalesImport = lazyWithRetry(() => import("./pages/variance/VarianceSalesImport")); // Variance Finder
 const VariancePosMapping = lazyWithRetry(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
 const VarianceCounts = lazyWithRetry(() => import("./pages/variance/VarianceCounts")); // Variance Finder
@@ -125,6 +127,7 @@ const AuthenticatedApp = () => {
                 <StockMovementProvider>
                   <ReplenishmentProvider>
                     <InventoryProvider>
+                      <InventoryUnitsProvider> {/* Warehouse serialized units */}
                       <UnitOfMeasureProvider> {/* NEW: UnitOfMeasureProvider */}
                         <RecipeProvider> {/* NEW: RecipeProvider */}
                           <VariancePeriodProvider> {/* Variance Finder */}
@@ -142,6 +145,7 @@ const AuthenticatedApp = () => {
                                   <Route path="home" element={<Dashboard />} />
                                   <Route path="inventory" element={<Inventory />} />
                                   <Route path="quick-scan" element={<QuickScanPage />} />
+                                  <Route path="bulk-intake" element={<BulkIntakePage />} />
                                   <Route path="inventory/:id" element={<EditInventoryItem />} />
                                   <Route path="inventory/:id/history" element={<ItemHistoryPage />} />
                                   <Route path="orders" element={<Orders />} />
@@ -189,6 +193,7 @@ const AuthenticatedApp = () => {
                           </VariancePeriodProvider> {/* Variance Finder */}
                         </RecipeProvider> {/* NEW: RecipeProvider */}
                       </UnitOfMeasureProvider> {/* NEW: UnitOfMeasureProvider */}
+                      </InventoryUnitsProvider> {/* Warehouse serialized units */}
                     </InventoryProvider>
                   </ReplenishmentProvider>
                 </StockMovementProvider>
