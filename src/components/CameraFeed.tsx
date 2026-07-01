@@ -28,11 +28,21 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onErr
   const controlsRef = useRef<IScannerControls | null>(null);
   const startingRef = useRef(false);
   const lastScanRef = useRef<{ code: string; time: number }>({ code: "", time: 0 });
+  // True only while a scan is live. Cleared by stop() so any decode callback that
+  // fires after the camera is closed is ignored (no accidental post-close scans).
+  const scanningRef = useRef(false);
+  // Hold the latest onScanSuccess in a ref so `start` doesn't depend on it —
+  // otherwise the parent passing a fresh handler each render would tear down and
+  // restart the camera on every re-render (and let scans leak in around close).
+  const onScanSuccessRef = useRef(onScanSuccess);
+  useEffect(() => { onScanSuccessRef.current = onScanSuccess; }, [onScanSuccess]);
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const stop = useCallback(() => {
+    // Flip this first so any in-flight decode callback bails immediately.
+    scanningRef.current = false;
     try {
       controlsRef.current?.stop();
     } catch {
@@ -83,6 +93,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onErr
         ]);
         readerRef.current = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 100 });
       }
+      scanningRef.current = true;
       const controls = await readerRef.current.decodeFromConstraints(
         {
           // Request a high-resolution stream — default iOS capture is too
@@ -96,15 +107,16 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onErr
         videoRef.current,
         (result) => {
           if (!result) return; // per-frame "not found" — ignore
+          if (!scanningRef.current) return; // camera stopped/closed — drop late callbacks
           const text = result.getText();
           if (continuous) {
             const now = Date.now();
             if (text === lastScanRef.current.code && now - lastScanRef.current.time < DUPLICATE_SCAN_COOLDOWN_MS) return;
             lastScanRef.current = { code: text, time: now };
-            onScanSuccess(text);
+            onScanSuccessRef.current(text);
           } else {
             stop();
-            onScanSuccess(text);
+            onScanSuccessRef.current(text);
           }
         },
       );
@@ -123,6 +135,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onErr
       } else {
         message += err instanceof Error ? err.message : "Please ensure a working camera and try again.";
       }
+      scanningRef.current = false;
       setError(message);
       onError(message);
       setLoading(false);
@@ -130,7 +143,7 @@ const CameraFeed: React.FC<CameraFeedProps> = ({ onScanSuccess, onLoading, onErr
     } finally {
       startingRef.current = false;
     }
-  }, [isActive, continuous, onScanSuccess, onLoading, onError, stop]);
+  }, [isActive, continuous, onLoading, onError, stop]);
 
   useEffect(() => {
     if (isActive) start();
