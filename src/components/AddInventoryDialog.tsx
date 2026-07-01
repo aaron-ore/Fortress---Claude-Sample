@@ -136,13 +136,12 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
     updateQrCode();
   }, [sku]);
 
-  // Restaurant locations don't require a SKU (food items rarely have one).
-  // We key off the selected main folder's location type.
+  // SKU is optional in every mode; the restaurant flag only tweaks placeholder copy.
   const selectedFolder = inventoryFolders.find((f) => f.id === selectedMainFolderId);
   const isRestaurant = selectedFolder?.locationType === "restaurant";
 
-  // For restaurant items left without a SKU, derive a unique one from the name
-  // so the unique constraint and QR generation still work.
+  // For items left without a SKU, derive a unique one from the name so the
+  // unique constraint and QR generation still work.
   const generateFallbackSku = () => {
     const base = itemName.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 16) || "ITEM";
     return `${base}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -236,7 +235,6 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
 
     if (
       !itemName.trim() ||
-      (!isRestaurant && !sku.trim()) ||
       !category.trim() ||
       !unitCost ||
       !retailPrice ||
@@ -376,7 +374,6 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
 
   const isFormInvalid =
     !itemName.trim() ||
-    (!isRestaurant && !sku.trim()) ||
     !category.trim() ||
     isNaN(parsedUnitCost) || parsedUnitCost < 0 ||
     isNaN(parsedRetailPrice) || parsedRetailPrice < 0 ||
@@ -461,15 +458,13 @@ const AddInventoryDialog: React.FC<AddInventoryDialogProps> = ({
           </div>
           <div className="space-y-2">
             <Label htmlFor="sku">
-              SKU {isRestaurant
-                ? <span className="text-xs text-muted-foreground">(optional)</span>
-                : <span className="text-red-500">*</span>}
+              SKU <span className="text-xs text-muted-foreground">(optional)</span>
             </Label>
             <Input
               id="sku"
               value={sku}
               onChange={(e) => setSku(e.target.value)}
-              placeholder={isRestaurant ? "Optional — auto-generated if left blank" : "e.g., LPX-512-16"}
+              placeholder="Optional — auto-generated if left blank"
               disabled={!canManageInventory} // NEW: Disable input if no permission
               aria-invalid={!!skuDuplicate}
               className={skuDuplicate ? "border-destructive focus-visible:ring-destructive" : ""}

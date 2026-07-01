@@ -13,7 +13,7 @@ import { useOnboarding } from "@/context/OnboardingContext";
 import { useInventoryUnits, NewUnitInput } from "@/context/InventoryUnitsContext";
 import { useProfile } from "@/context/ProfileContext";
 import { useBusinessMode } from "@/hooks/useBusinessMode";
-import AddInventoryDialog from "@/components/AddInventoryDialog";
+import QuickAddProductDialog from "@/components/warehouse/QuickAddProductDialog";
 import CameraScannerDialog from "@/components/CameraScannerDialog";
 import { showError, showSuccess } from "@/utils/toast";
 import { IntendedUse, INTENDED_USES, DEFAULT_INTENDED_USE, intendedUseLabel } from "@/lib/warehouseStatuses";
@@ -390,7 +390,12 @@ const BulkIntakePage: React.FC = () => {
         </div>
       )}
 
-      <AddInventoryDialog isOpen={addProductOpen} onClose={() => { setAddProductOpen(false); focusInput(); }} />
+      <QuickAddProductDialog
+        isOpen={addProductOpen}
+        onClose={() => { setAddProductOpen(false); focusInput(); }}
+        defaultFolderId={folderId === "none" ? undefined : folderId}
+        onCreated={(item) => setProductId(item.id)}
+      />
 
       <CameraScannerDialog
         isOpen={cameraOpen}

@@ -59,7 +59,7 @@ export interface InventoryItem {
 interface InventoryContextType {
   inventoryItems: InventoryItem[];
   isLoadingInventory: boolean;
-  addInventoryItem: (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId" | "quantity" | "createdAt" | "imageUrl"> & { vendorId?: string; imageUrl: string | null | undefined }) => Promise<void>;
+  addInventoryItem: (item: Omit<InventoryItem, "id" | "status" | "lastUpdated" | "organizationId" | "quantity" | "createdAt" | "imageUrl"> & { vendorId?: string; imageUrl: string | null | undefined }) => Promise<InventoryItem | null>;
   updateInventoryItem: (updatedItem: Omit<InventoryItem, "quantity" | "createdAt" | "imageUrl"> & { id: string; imageUrl: string | null | undefined }) => Promise<void>;
   deleteInventoryItem: (itemId: string) => Promise<void>;
   refreshInventory: () => Promise<void>;
@@ -256,7 +256,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
       const errorMessage = "Login/org ID required to add items.";
       await logActivity("Add Inventory Item Failed", errorMessage, profile, { item_name: item.name, sku: item.sku }, true);
       showError(errorMessage);
-      return;
+      return null;
     }
 
     const totalQuantity = item.pickingBinQuantity + item.overstockQuantity;
@@ -317,6 +317,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({
 
       showSuccess(`Added new item: ${data[0].name}.`);
       await logActivity("Add Inventory Item Success", `Added new inventory item: ${data[0].name} (SKU: ${data[0].sku}).`, profile, { item_id: data[0].id, item_name: data[0].name, sku: data[0].sku });
+      return newItem;
     } else {
       const errorMessage = "Failed to add item: No data returned after insert.";
       console.error(errorMessage);
