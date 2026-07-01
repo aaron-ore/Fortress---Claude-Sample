@@ -14,6 +14,10 @@ CREATE TABLE IF NOT EXISTS public.inventory_units (
   -- later is a one-line constraint change, matching how the app sends strings.
   unit_status TEXT NOT NULL DEFAULT 'available'
     CHECK (unit_status IN ('available','allocated','shipped','deployed','demo','returned','defective')),
+  -- Intended use / classification of the device, independent of its lifecycle
+  -- status and physical folder: production stock vs proof-of-concept vs pending.
+  intended_use TEXT NOT NULL DEFAULT 'production'
+    CHECK (intended_use IN ('production','poc','pending')),
   vendor_id UUID REFERENCES public.vendors(id) ON DELETE SET NULL, -- supplier
   folder_id UUID REFERENCES public.inventory_folders(id) ON DELETE SET NULL, -- location
   merchant_id UUID, -- set during allocation (Phase 2); no FK yet, merchants table TBD
@@ -31,6 +35,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_units_org_serial
 CREATE INDEX IF NOT EXISTS idx_inventory_units_org ON public.inventory_units(organization_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_units_product ON public.inventory_units(product_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_units_status ON public.inventory_units(unit_status);
+CREATE INDEX IF NOT EXISTS idx_inventory_units_intended_use ON public.inventory_units(intended_use);
 CREATE INDEX IF NOT EXISTS idx_inventory_units_merchant ON public.inventory_units(merchant_id);
 
 -- Keep updated_at fresh on every write.

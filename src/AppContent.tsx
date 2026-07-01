@@ -100,6 +100,7 @@ const Recipes = lazyWithRetry(() => import("./pages/Recipes")); // NEW: Lazy imp
 const UnitsOfMeasure = lazyWithRetry(() => import("./pages/UnitsOfMeasure"));
 const QuickScanPage = lazyWithRetry(() => import("./pages/QuickScanPage"));
 const BulkIntakePage = lazyWithRetry(() => import("./pages/BulkIntakePage")); // Warehouse serialized intake
+const DevicesPage = lazyWithRetry(() => import("./pages/DevicesPage")); // Warehouse serialized units list
 const VarianceSalesImport = lazyWithRetry(() => import("./pages/variance/VarianceSalesImport")); // Variance Finder
 const VariancePosMapping = lazyWithRetry(() => import("./pages/variance/VariancePosMapping")); // Variance Finder
 const VarianceCounts = lazyWithRetry(() => import("./pages/variance/VarianceCounts")); // Variance Finder
@@ -146,6 +147,7 @@ const AuthenticatedApp = () => {
                                   <Route path="inventory" element={<Inventory />} />
                                   <Route path="quick-scan" element={<QuickScanPage />} />
                                   <Route path="bulk-intake" element={<BulkIntakePage />} />
+                                  <Route path="devices" element={<DevicesPage />} />
                                   <Route path="inventory/:id" element={<EditInventoryItem />} />
                                   <Route path="inventory/:id/history" element={<ItemHistoryPage />} />
                                   <Route path="orders" element={<Orders />} />

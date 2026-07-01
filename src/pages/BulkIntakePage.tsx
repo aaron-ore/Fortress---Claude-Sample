@@ -15,6 +15,7 @@ import { useProfile } from "@/context/ProfileContext";
 import { useBusinessMode } from "@/hooks/useBusinessMode";
 import AddInventoryDialog from "@/components/AddInventoryDialog";
 import { showError, showSuccess } from "@/utils/toast";
+import { IntendedUse, INTENDED_USES, DEFAULT_INTENDED_USE, intendedUseLabel } from "@/lib/warehouseStatuses";
 
 /** Short feedback tone — high for success, low for failure. Best-effort. */
 const beep = (ok: boolean) => {
@@ -68,6 +69,7 @@ const BulkIntakePage: React.FC = () => {
   const [productId, setProductId] = useState("");
   const [vendorId, setVendorId] = useState("none");
   const [folderId, setFolderId] = useState("none");
+  const [intendedUse, setIntendedUse] = useState<IntendedUse>(DEFAULT_INTENDED_USE);
   const [receivedDate, setReceivedDate] = useState(new Date().toISOString().split("T")[0]);
 
   const [code, setCode] = useState("");
@@ -150,6 +152,7 @@ const BulkIntakePage: React.FC = () => {
         serialNumber: r.serial,
         vendorId: vendorId === "none" ? undefined : vendorId,
         folderId: folderId === "none" ? undefined : folderId,
+        intendedUse,
         receivedDate,
       }));
       const inserted = await addUnitsBatch(payload);
@@ -208,7 +211,7 @@ const BulkIntakePage: React.FC = () => {
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Batch details</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <div className="space-y-1.5">
             <Label>Product / Model <span className="text-red-500">*</span></Label>
             <div className="flex gap-2">
@@ -257,6 +260,19 @@ const BulkIntakePage: React.FC = () => {
                 <SelectItem value="none">Unassigned</SelectItem>
                 {inventoryFolders.map((f) => (
                   <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Intended use</Label>
+            <Select value={intendedUse} onValueChange={(v) => setIntendedUse(v as IntendedUse)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INTENDED_USES.map((u) => (
+                  <SelectItem key={u} value={u}>{intendedUseLabel(u)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -362,6 +378,8 @@ const BulkIntakePage: React.FC = () => {
           Saving <Badge variant="info" className="mx-1">{rows.length}</Badge> unit{rows.length === 1 ? "" : "s"} of{" "}
           <span className="font-medium text-foreground">{selectedProduct.name}</span> as{" "}
           <Badge variant="success">Available</Badge>
+          <span className="mx-1">·</span>
+          <Badge variant="muted">{intendedUseLabel(intendedUse)}</Badge>
         </div>
       )}
 

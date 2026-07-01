@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { showError, showSuccess } from "@/utils/toast";
 import { useProfile } from "./ProfileContext";
 import { logActivity } from "@/utils/logActivity";
-import { UnitStatus, DEFAULT_UNIT_STATUS } from "@/lib/warehouseStatuses";
+import { UnitStatus, DEFAULT_UNIT_STATUS, IntendedUse, DEFAULT_INTENDED_USE } from "@/lib/warehouseStatuses";
 
 export interface InventoryUnit {
   id: string;
@@ -11,6 +11,7 @@ export interface InventoryUnit {
   productId: string;
   serialNumber: string;
   unitStatus: UnitStatus;
+  intendedUse: IntendedUse;
   vendorId?: string;
   folderId?: string;
   merchantId?: string;
@@ -29,6 +30,7 @@ export interface NewUnitInput {
   receivedDate?: string;
   notes?: string;
   unitStatus?: UnitStatus;
+  intendedUse?: IntendedUse;
 }
 
 interface InventoryUnitsContextType {
@@ -49,6 +51,7 @@ const mapRow = (u: any): InventoryUnit => ({
   productId: u.product_id,
   serialNumber: u.serial_number,
   unitStatus: u.unit_status,
+  intendedUse: u.intended_use,
   vendorId: u.vendor_id || undefined,
   folderId: u.folder_id || undefined,
   merchantId: u.merchant_id || undefined,
@@ -109,6 +112,7 @@ export const InventoryUnitsProvider: React.FC<{ children: ReactNode }> = ({ chil
       product_id: u.productId,
       serial_number: u.serialNumber.trim(),
       unit_status: u.unitStatus || DEFAULT_UNIT_STATUS,
+      intended_use: u.intendedUse || DEFAULT_INTENDED_USE,
       vendor_id: u.vendorId || null,
       folder_id: u.folderId || null,
       received_date: u.receivedDate || new Date().toISOString().split("T")[0],

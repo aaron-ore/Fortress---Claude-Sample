@@ -23,6 +23,7 @@ import {
   Ruler, // Units of measure
   ScanBarcode, // Quick Scan station
   PackagePlus, // Bulk Intake
+  Cpu, // Devices (serialized units)
 } from "lucide-react";
 import { BusinessMode } from "@/lib/businessModes";
 
@@ -63,6 +64,7 @@ export const mainNavItems: NavItem[] = [
   },
   { title: "Quick Scan", href: "/quick-scan", icon: ScanBarcode, modes: ["retail", "warehouse"] },
   { title: "Bulk Intake", href: "/bulk-intake", icon: PackagePlus, tag: "NEW", modes: ["warehouse"] },
+  { title: "Devices", href: "/devices", icon: Cpu, tag: "NEW", modes: ["warehouse"] },
   { title: "Orders", href: "/orders", icon: Receipt },
   { title: "Vendors", href: "/vendors", icon: Truck },
   { title: "Reports", href: "/reports", icon: BarChart },
