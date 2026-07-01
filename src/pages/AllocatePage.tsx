@@ -7,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ScanBarcode, PlusCircle, Trash2, CheckCircle2, XCircle, Loader2, PackageCheck } from "lucide-react";
+import { ScanBarcode, PlusCircle, Trash2, CheckCircle2, XCircle, Loader2, PackageCheck, Camera } from "lucide-react";
 import { useInventory } from "@/context/InventoryContext";
 import { useInventoryUnits } from "@/context/InventoryUnitsContext";
 import { useMerchants, PaymentStatus } from "@/context/MerchantsContext";
 import { useProfile } from "@/context/ProfileContext";
 import { useBusinessMode } from "@/hooks/useBusinessMode";
 import AddEditMerchantDialog from "@/components/warehouse/AddEditMerchantDialog";
+import CameraScannerDialog from "@/components/CameraScannerDialog";
 import { showError, showSuccess } from "@/utils/toast";
 import { unitStatusLabel } from "@/lib/warehouseStatuses";
 
@@ -53,6 +54,7 @@ const AllocatePage: React.FC = () => {
   const [feed, setFeed] = useState<FeedEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [merchantDialogOpen, setMerchantDialogOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const lastScanRef = useRef<{ value: string; at: number }>({ value: "", at: 0 });
@@ -211,7 +213,12 @@ const AllocatePage: React.FC = () => {
             className="h-14 text-lg"
             disabled={saving}
           />
-          <p className="text-xs text-muted-foreground">Only <strong>Available</strong> units can be allocated. Already-allocated, shipped, or unknown serials are rejected.</p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <Button variant="outline" className="sm:w-auto" onClick={() => setCameraOpen(true)} disabled={saving}>
+              <Camera className="h-4 w-4 mr-2" /> Scan with camera
+            </Button>
+            <p className="text-xs text-muted-foreground">Only <strong>Available</strong> units can be allocated. Already-allocated, shipped, or unknown serials are rejected.</p>
+          </div>
         </CardContent>
       </Card>
 
@@ -287,6 +294,15 @@ const AllocatePage: React.FC = () => {
         isOpen={merchantDialogOpen}
         onClose={() => { setMerchantDialogOpen(false); focusInput(); }}
         onCreated={(m) => setMerchantId(m.id)}
+      />
+
+      <CameraScannerDialog
+        isOpen={cameraOpen}
+        onClose={() => { setCameraOpen(false); focusInput(); }}
+        onScanSuccess={handleScan}
+        continuous
+        title="Scan serials with camera"
+        description="Point the camera at each serial barcode. Keep scanning; tap Close when done."
       />
     </div>
   );

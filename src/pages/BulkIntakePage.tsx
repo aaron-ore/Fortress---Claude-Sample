@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ScanBarcode, PackagePlus, Trash2, CheckCircle2, XCircle, Loader2, Save } from "lucide-react";
+import { ScanBarcode, PackagePlus, Trash2, CheckCircle2, XCircle, Loader2, Save, Camera } from "lucide-react";
 import { useInventory } from "@/context/InventoryContext";
 import { useVendors } from "@/context/VendorContext";
 import { useOnboarding } from "@/context/OnboardingContext";
@@ -14,6 +14,7 @@ import { useInventoryUnits, NewUnitInput } from "@/context/InventoryUnitsContext
 import { useProfile } from "@/context/ProfileContext";
 import { useBusinessMode } from "@/hooks/useBusinessMode";
 import AddInventoryDialog from "@/components/AddInventoryDialog";
+import CameraScannerDialog from "@/components/CameraScannerDialog";
 import { showError, showSuccess } from "@/utils/toast";
 import { IntendedUse, INTENDED_USES, DEFAULT_INTENDED_USE, intendedUseLabel } from "@/lib/warehouseStatuses";
 
@@ -77,6 +78,7 @@ const BulkIntakePage: React.FC = () => {
   const [feed, setFeed] = useState<FeedEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [addProductOpen, setAddProductOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const lastScanRef = useRef<{ value: string; at: number }>({ value: "", at: 0 });
@@ -301,9 +303,14 @@ const BulkIntakePage: React.FC = () => {
             className="h-14 text-lg"
             disabled={saving}
           />
-          <p className="text-xs text-muted-foreground">
-            Each scan adds a row below. Duplicate serials (already scanned or already in inventory) are rejected with a low beep.
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <Button variant="outline" className="sm:w-auto" onClick={() => setCameraOpen(true)} disabled={saving}>
+              <Camera className="h-4 w-4 mr-2" /> Scan with camera
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              No scanner? Use your phone/tablet camera. Each scan adds a row; duplicates (already scanned or already in inventory) are rejected with a low beep.
+            </p>
+          </div>
         </CardContent>
       </Card>
 
@@ -384,6 +391,15 @@ const BulkIntakePage: React.FC = () => {
       )}
 
       <AddInventoryDialog isOpen={addProductOpen} onClose={() => { setAddProductOpen(false); focusInput(); }} />
+
+      <CameraScannerDialog
+        isOpen={cameraOpen}
+        onClose={() => { setCameraOpen(false); focusInput(); }}
+        onScanSuccess={handleScan}
+        continuous
+        title="Scan serials with camera"
+        description="Point the camera at each serial barcode. Keep scanning; tap Close when done."
+      />
     </div>
   );
 };
