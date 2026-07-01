@@ -80,6 +80,11 @@ const DevicesPage: React.FC = () => {
     },
     { accessorKey: "folderName", header: "Location" },
     { accessorKey: "vendorName", header: "Supplier" },
+    {
+      accessorKey: "trackingNumber",
+      header: "Tracking",
+      cell: ({ row }) => row.original.trackingNumber ? <span className="font-mono text-xs">{row.original.trackingNumber}</span> : "—",
+    },
     { accessorKey: "receivedDate", header: "Received" },
   ], []);
 

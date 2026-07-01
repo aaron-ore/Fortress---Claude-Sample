@@ -41,6 +41,7 @@ import InvoicePdfContent from "@/components/reports/pdf/InvoicePdfContent";
 import PurchaseOrderPdfContent from "@/components/reports/pdf/PurchaseOrderPdfContent";
 import FolderLabelPdfContent from "@/components/reports/pdf/FolderLabelPdfContent";
 import PickingWavePdfContent from "@/components/reports/pdf/PickingWavePdfContent";
+import PackingSlipPdfContent from "@/components/reports/pdf/PackingSlipPdfContent";
 
 
 export interface ReportItem {
@@ -130,4 +131,5 @@ export const pdfContentComponents: { [key: string]: React.ElementType } = {
   "invoice": InvoicePdfContent,
   "location-label": FolderLabelPdfContent,
   "picking-wave": PickingWavePdfContent,
+  "packing-slip": PackingSlipPdfContent,
 };

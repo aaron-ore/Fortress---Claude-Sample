@@ -23,7 +23,9 @@ CREATE TABLE IF NOT EXISTS public.inventory_units (
     CHECK (intended_use IN ('production','poc','pending')),
   vendor_id UUID REFERENCES public.vendors(id) ON DELETE SET NULL, -- supplier
   folder_id UUID REFERENCES public.inventory_folders(id) ON DELETE SET NULL, -- location
-  merchant_id UUID, -- set during allocation (Phase 2); no FK yet, merchants table TBD
+  merchant_id UUID, -- set during allocation (Phase 2); FK added below once merchants exists
+  shipment_id UUID, -- set when shipped (Phase 3); FK added below once shipments exists
+  tracking_number TEXT, -- denormalized from the shipment for quick lookup/display
   received_date DATE NOT NULL DEFAULT current_date,
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -147,6 +149,52 @@ CREATE POLICY "view merchants" ON public.merchants FOR SELECT
   USING (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid()));
 DROP POLICY IF EXISTS "manage merchants" ON public.merchants;
 CREATE POLICY "manage merchants" ON public.merchants FOR ALL
+  USING (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid())
+    AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin','inventory_manager'))
+  WITH CHECK (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid())
+    AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin','inventory_manager'));
+
+-- ─── Phase 3: Shipments (a packing-slip / dispatch of units to a merchant) ────
+CREATE TABLE IF NOT EXISTS public.shipments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  user_id UUID,
+  merchant_id UUID REFERENCES public.merchants(id) ON DELETE SET NULL,
+  ship_date DATE NOT NULL DEFAULT current_date,
+  tracking_number TEXT,
+  carrier TEXT,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_shipments_org ON public.shipments(organization_id);
+CREATE INDEX IF NOT EXISTS idx_shipments_merchant ON public.shipments(merchant_id);
+
+-- Ensure the unit columns exist even if inventory_units pre-existed this migration.
+ALTER TABLE public.inventory_units ADD COLUMN IF NOT EXISTS shipment_id UUID;
+ALTER TABLE public.inventory_units ADD COLUMN IF NOT EXISTS tracking_number TEXT;
+
+-- Link units.shipment_id → shipments now that the table exists (idempotent).
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'inventory_units_shipment_id_fkey') THEN
+    ALTER TABLE public.inventory_units
+      ADD CONSTRAINT inventory_units_shipment_id_fkey
+      FOREIGN KEY (shipment_id) REFERENCES public.shipments(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
+DROP TRIGGER IF EXISTS trg_shipments_updated_at ON public.shipments;
+CREATE TRIGGER trg_shipments_updated_at BEFORE UPDATE ON public.shipments
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+ALTER TABLE public.shipments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "view shipments" ON public.shipments;
+CREATE POLICY "view shipments" ON public.shipments FOR SELECT
+  USING (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid()));
+DROP POLICY IF EXISTS "manage shipments" ON public.shipments;
+CREATE POLICY "manage shipments" ON public.shipments FOR ALL
   USING (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid())
     AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin','inventory_manager'))
   WITH CHECK (organization_id = (SELECT organization_id FROM public.profiles WHERE id = auth.uid())

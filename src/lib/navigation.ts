@@ -68,6 +68,7 @@ export const mainNavItems: NavItem[] = [
   { title: "Bulk Intake", href: "/bulk-intake", icon: PackagePlus, tag: "NEW", modes: ["warehouse"] },
   { title: "Devices", href: "/devices", icon: Cpu, tag: "NEW", modes: ["warehouse"] },
   { title: "Allocate", href: "/allocate", icon: PackageCheck, tag: "NEW", modes: ["warehouse"] },
+  { title: "Ship", href: "/ship", icon: Truck, tag: "NEW", modes: ["warehouse"] },
   { title: "Merchants", href: "/partners-merchants", icon: Store, modes: ["warehouse"] },
   { title: "Orders", href: "/orders", icon: Receipt },
   { title: "Vendors", href: "/vendors", icon: Truck },
